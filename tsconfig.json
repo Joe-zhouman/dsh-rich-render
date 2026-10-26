@@ -1,0 +1,31 @@
+{
+  // Package-local config for a package installed from outside the L:/dsh
+  // workspace: it must not extend the repository base, whose `paths` map and
+  // `composite` project graph are workspace-only. It owns module resolution
+  // for the TS/TSX sources; tsdown produces both lib/ artifacts and `dts` is
+  // off, so this file never emits (noEmit) and never gates the build.
+  //
+  // The one external value dependency, @deepseek-ai/dsh-client-ui-primitives,
+  // resolves for TYPES ONLY against the repository sources: the runtime copy
+  // arrives through the browser module loader, never from disk here.
+  "compilerOptions": {
+    "target": "es2024",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "lib": ["es2024", "dom", "dom.iterable"],
+    "jsx": "react-jsx",
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "types": [],
+    "baseUrl": ".",
+    "paths": {
+      "@deepseek-ai/dsh-client-ui-primitives": ["../../packages/client/ui-primitives/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "test/**/*.mjs", "index.mjs", "tsdown.config.mjs"]
+}
