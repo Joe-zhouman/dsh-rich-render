@@ -7,6 +7,7 @@
 import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { MarkdownLabels } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { TimelineSegment } from '../rules/segments.ts'
+import { strictLines } from '../rules/strict-lines.ts'
 import { pathImages } from '../markdown-fallback.ts'
 import { InlineMarkdown } from './InlineMarkdown.tsx'
 
@@ -30,7 +31,7 @@ export function TimelineView({ segment, labels }: TimelineViewProps) {
               <div className="dshr-timeline-title"><InlineMarkdown text={entry.title} labels={labels} /></div>
               {entry.body !== '' && (
                 <div className="dshr-timeline-body">
-                  <MarkdownText text={entry.body} labels={labels} pathImages={pathImages} variant="compact" />
+                  <MarkdownText text={strictLines(entry.body)} labels={labels} pathImages={pathImages} variant="compact" />
                 </div>
               )}
             </div>

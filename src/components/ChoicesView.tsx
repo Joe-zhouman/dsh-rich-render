@@ -9,6 +9,7 @@
 import { useState } from 'react'
 import type { MarkdownLabels } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ChoicesSegment } from '../rules/segments.ts'
+import { strictLines } from '../rules/strict-lines.ts'
 import type { Mentions } from '../markdown-fallback.ts'
 import { InlineMarkdown } from './InlineMarkdown.tsx'
 import { RichMarkdownText } from './RichMarkdownText.tsx'
@@ -51,7 +52,7 @@ export function ChoicesView({ segment, labels, mentions, chrome }: ChoicesViewPr
       <div className="dshr-choices-panel">
         {current !== undefined && current.body !== '' && (
           <RichMarkdownText
-            text={current.body}
+            text={strictLines(current.body)}
             streaming={false}
             labels={labels}
             mentions={mentions}

@@ -9,6 +9,7 @@ import { useState } from 'react'
 import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { MarkdownLabels } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ChecklistSegment } from '../rules/segments.ts'
+import { strictLines } from '../rules/strict-lines.ts'
 import { pathImages } from '../markdown-fallback.ts'
 import { InlineMarkdown } from './InlineMarkdown.tsx'
 
@@ -81,7 +82,7 @@ export function ChecklistView({ segment, labels, chrome }: ChecklistViewProps) {
               <div className="dshr-checklist-item-title"><InlineMarkdown text={item.title} labels={labels} /></div>
               {item.body !== '' && (
                 <div className="dshr-checklist-item-body">
-                  <MarkdownText text={item.body} labels={labels} pathImages={pathImages} variant="compact" />
+                  <MarkdownText text={strictLines(item.body)} labels={labels} pathImages={pathImages} variant="compact" />
                 </div>
               )}
             </div>

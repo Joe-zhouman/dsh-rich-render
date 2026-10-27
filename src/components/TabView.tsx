@@ -10,6 +10,7 @@ import { useState } from 'react'
 import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { MarkdownLabels } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { TabSegment } from '../rules/segments.ts'
+import { strictLines } from '../rules/strict-lines.ts'
 import { pathImages } from '../markdown-fallback.ts'
 
 export interface TabViewProps {
@@ -42,7 +43,7 @@ export function TabView({ segment, labels }: TabViewProps) {
       </div>
       <div className="dshr-tabs-pane" role="tabpanel">
         {current !== undefined && current.body !== '' && (
-          <MarkdownText text={current.body} labels={labels} pathImages={pathImages} />
+          <MarkdownText text={strictLines(current.body)} labels={labels} pathImages={pathImages} />
         )}
       </div>
     </div>

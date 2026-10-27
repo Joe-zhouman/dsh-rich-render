@@ -11,6 +11,7 @@ import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { MarkdownLabels } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { StackBoxSpec, StackSegment } from '../rules/segments.ts'
 import { stackAlign } from '../rules/stack-align.ts'
+import { strictLines } from '../rules/strict-lines.ts'
 import { textOn } from '../rules/stack-colors.ts'
 import { pathImages } from '../markdown-fallback.ts'
 
@@ -24,7 +25,7 @@ function Box({ box, labels }: { box: StackBoxSpec; labels: MarkdownLabels }) {
     <div className="dshr-stack-box" style={style}>
       {box.content === ''
         ? <span aria-hidden>&nbsp;</span>
-        : <MarkdownText text={box.content} labels={labels} pathImages={pathImages} variant="compact" />}
+        : <MarkdownText text={strictLines(box.content)} labels={labels} pathImages={pathImages} variant="compact" />}
     </div>
   )
 }
