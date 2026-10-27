@@ -975,11 +975,6 @@ export const STYLESHEET = `
   padding: 10px;
   border: 1px solid var(--dsw-alias-border-l2);
   border-radius: 10px;
-  background: var(--dsw-static-neutral-100);
-}
-
-body[data-ds-dark-theme] .dshr-stack {
-  background: var(--dsw-alias-bg-layer-1);
 }
 
 .dshr-stack-layer {
@@ -992,7 +987,7 @@ body[data-ds-dark-theme] .dshr-stack {
 .dshr-stack-box {
   flex: 1 1 0;
   min-width: 0;
-  background: var(--dsw-static-neutral-00);
+  background: var(--dsw-static-neutral-100);
   border-radius: 8px;
   padding: 10px 12px;
   overflow-wrap: anywhere;
