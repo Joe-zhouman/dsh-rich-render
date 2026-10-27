@@ -50,6 +50,19 @@ export interface ClientCtx {
       dicts: Readonly<Record<string, Readonly<Record<string, string>>>>,
     ): () => void
   }
+  /** Theme runtime: token override layers for typography. */
+  readonly theme: {
+    /**
+     * Stack one override layer over the active theme.
+     * @param source - layer identity; re-calling replaces that layer.
+     * @param tokens - CSS custom property → per-color-scheme value pair.
+     * @returns disposer removing exactly this layer.
+     */
+    overrideTokens(
+      source: string,
+      tokens: Readonly<Record<string, { readonly light: string; readonly dark: string }>>,
+    ): () => void
+  }
   /** Host RPC channel access (the matplotlib bridge); composed by the web shell. */
   readonly connection?: {
     readonly rpc: import('../matplotlib-bridge.ts').RpcFace

@@ -17,11 +17,18 @@ import { injectStylesheet } from './stylesheet.ts'
 import type { ClientCtx } from './client-types.ts'
 
 /** Services this client plugin consumes. */
-export const inject = ['slots', 'locale', 'connection']
+export const inject = ['slots', 'locale', 'connection', 'theme']
+
+/** UI face: Google's Noto Sans CJK (SC) for Latin and Chinese, system fallbacks behind it. */
+const FONT_STACK = "'Noto Sans SC', 'Noto Sans CJK SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif"
 
 /** Install the stylesheet, dictionary, the matplotlib bridge, the assistant-step replacement, and the watermark overlay. */
 export function apply(ctx: ClientCtx): void {
   ctx.effect(() => injectStylesheet(), 'rich-render: stylesheet')
+  ctx.effect(() => ctx.theme.overrideTokens('dsh-local-rich-render:font', {
+    '--dsw-font-family': { light: FONT_STACK, dark: FONT_STACK },
+    '--dsw-font-family-brand': { light: FONT_STACK, dark: FONT_STACK },
+  }), 'rich-render: Noto Sans CJK typography')
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'rich-render: dictionaries')
   ctx.effect(() => {
     setMatplotlibRpc(ctx.connection.rpc)

@@ -7,7 +7,7 @@
 | 项 | 值 |
 |---|---|
 | 包名 | `dsh-local-rich-render` |
-| 版本 | `0.9.6`（`private`，不发布） |
+| 版本 | `0.9.7`（`private`，不发布） |
 | 类型 | host + client bundle（`dsh.client.platform: web`，自带 `dsh.bundle.patch`） |
 | 宿主半区入口 | `lib/index.js`（由 `index.mjs` 构建；预构建产物随仓库提交） |
 | 浏览器半区入口 | `lib/client.js`（CJS factory，预构建产物随仓库提交） |
@@ -275,6 +275,10 @@ spec 设想独立 channel `/rich-render`。实际：自定义 channel 的 `rpc.h
 ## 修订记录（2026-10-25，v0.2.1）
 
 persona.md 措辞修订（用户编辑，无代码改动，测试 108/108 仍绿）：富渲染总则改为「解释论证默认连贯段落」，收紧原生无序列表与有序列表的使用条件；stack 用途扩展为「同一阶段内多个方向或方案的分组说明」并写明与多级列表的取舍（回应上面"stack 未被自发使用"观察项）；「选择」节从条目列表改为连贯段落。persona 为运行时资产，宿主启动时一次性读入。desktop profile 已 remove+add 刷新至 0.2.1（运行中的桌面端重启后生效）；web profile 仍装 0.2.0（persona 为旧版），需要时同法刷新。
+
+## 修订记录（2026-10-27，v0.9.7）
+
+用户偏好 Google Noto Sans CJK（手机同款）：client 半边通过 `ctx.theme.overrideTokens('dsh-local-rich-render:font', ...)` 把 `--dsw-font-family` 与 `--dsw-font-family-brand` 覆盖为 `'Noto Sans SC', 'Noto Sans CJK SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif`（light/dark 同值）；只改 UI 正文字体，`--ds-font-family-code` 不动。本机已装有 Noto Sans SC（Regular/Medium/Bold）与 Noto Sans CJK SC，无需下载或安装。字体随富渲染插件启用/停用；禁用插件即回系统字体。build.test 的 client stub 补 `theme` 并断言覆盖层。138 项测试仍绿。两 profile 已刷，桌面端重启生效。
 
 ## 修订记录（2026-10-27，v0.9.6）
 

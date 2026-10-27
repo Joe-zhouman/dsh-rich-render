@@ -145,6 +145,7 @@ function stubContext() {
       return () => {}
     },
   }
+  const themeCalls = []
   const ctx = {
     slots,
     effect(factory) {
@@ -153,8 +154,9 @@ function stubContext() {
     },
     locale: { register: ns => { localeNames.push(ns); return () => {} } },
     connection: { rpc: {} },
+    theme: { overrideTokens: (source, tokens) => { themeCalls.push([source, tokens]); return () => {} } },
   }
-  return { ctx, registrations, declared, localeNames }
+  return { ctx, registrations, declared, localeNames, themeCalls }
 }
 
 test('the client artifact loads through the module table and replaces the assistant-step seat', () => {
@@ -162,16 +164,20 @@ test('the client artifact loads through the module table and replaces the assist
   const { dom, loaded, asked } = loadClient()
   assert.equal(loaded.id, 'dsh-local-rich-render')
   assert.equal(typeof loaded.exports.apply, 'function')
-  assert.deepEqual([...loaded.exports.inject], ['slots', 'locale', 'connection'])
+  assert.deepEqual([...loaded.exports.inject], ['slots', 'locale', 'connection', 'theme'])
   assert.deepEqual(
     [...new Set(asked)].sort(),
     [...MODULE_TABLE].sort(),
     'the bundle must resolve nothing beyond the declared module-table keys',
   )
 
-  const { ctx, registrations, declared, localeNames } = stubContext()
+  const { ctx, registrations, declared, localeNames, themeCalls } = stubContext()
   loaded.exports.apply(ctx)
 
+  assert.equal(themeCalls.length, 1)
+  assert.equal(themeCalls[0][0], 'dsh-local-rich-render:font')
+  assert.match(themeCalls[0][1]['--dsw-font-family'].light, /Noto Sans SC/u)
+  assert.equal(themeCalls[0][1]['--dsw-font-family'].light, themeCalls[0][1]['--dsw-font-family'].dark)
   assert.deepEqual(localeNames, ['richRender'])
   assert.deepEqual(declared, ['conversation.chat.node', 'shell.overlay'])
   assert.equal(registrations.length, 2)
@@ -254,6 +260,7 @@ test('the assistant-step renderer renders one settled text block natively', () =
     effect(factory) { factory(); return () => {} },
     locale: { register: () => () => {} },
     connection: { rpc: {} },
+    theme: { overrideTokens: () => () => {} },
   }
   loaded.exports.apply(ctx)
   const View = registrations[0].component
@@ -305,6 +312,7 @@ test('upgraded titles and table cells render their inline source through Markdow
     effect(factory) { factory(); return () => {} },
     locale: { register: () => () => {} },
     connection: { rpc: {} },
+    theme: { overrideTokens: () => () => {} },
   }
   loaded.exports.apply(ctx)
   const View = registrations[0].component
@@ -381,6 +389,7 @@ test('markdown image syntax keeps the local-path vocabulary in native and upgrad
     effect(factory) { factory(); return () => {} },
     locale: { register: () => () => {} },
     connection: { rpc: {} },
+    theme: { overrideTokens: () => () => {} },
   }
   loaded.exports.apply(ctx)
   const View = registrations[0].component
@@ -445,6 +454,7 @@ test('tab fence renders the tab bar and the first page only', () => {
     effect(factory) { factory(); return () => {} },
     locale: { register: () => () => {} },
     connection: { rpc: {} },
+    theme: { overrideTokens: () => () => {} },
   }
   loaded.exports.apply(ctx)
   const View = registrations[0].component
@@ -498,6 +508,7 @@ test('prototype choices render radio options and a live showcase', () => {
     effect(factory) { factory(); return () => {} },
     locale: { register: () => () => {} },
     connection: { rpc: {} },
+    theme: { overrideTokens: () => () => {} },
   }
   loaded.exports.apply(ctx)
   const View = registrations[0].component
@@ -552,6 +563,7 @@ test('typed callouts render the alert flavor, title, and icon', () => {
     effect(factory) { factory(); return () => {} },
     locale: { register: () => () => {} },
     connection: { rpc: {} },
+    theme: { overrideTokens: () => () => {} },
   }
   loaded.exports.apply(ctx)
   const View = registrations[0].component
@@ -602,6 +614,7 @@ test('chartable tables open on the chart with an export tab', () => {
     effect(factory) { factory(); return () => {} },
     locale: { register: () => () => {} },
     connection: { rpc: {} },
+    theme: { overrideTokens: () => () => {} },
   }
   loaded.exports.apply(ctx)
   const View = registrations[0].component
@@ -678,6 +691,7 @@ test('a task list renders as a checklist with marker state and live progress', (
     effect(factory) { factory(); return () => {} },
     locale: { register: () => () => {} },
     connection: { rpc: {} },
+    theme: { overrideTokens: () => () => {} },
   }
   loaded.exports.apply(ctx)
   const View = registrations[0].component
