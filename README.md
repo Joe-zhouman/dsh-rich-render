@@ -7,7 +7,7 @@
 | 项 | 值 |
 |---|---|
 | 包名 | `dsh-local-rich-render` |
-| 版本 | `0.9.3`（`private`，不发布） |
+| 版本 | `0.9.4`（`private`，不发布） |
 | 类型 | host + client bundle（`dsh.client.platform: web`，自带 `dsh.bundle.patch`） |
 | 宿主半区入口 | `lib/index.js`（由 `index.mjs` 构建；预构建产物随仓库提交） |
 | 浏览器半区入口 | `lib/client.js`（CJS factory，预构建产物随仓库提交） |
@@ -61,7 +61,7 @@
 cd L:/dsh/.local-deploy/rich-render-plugin
 pnpm install        # 依赖：mdast 解析层 + react 类型（构建期）
 pnpm run build      # tsdown 双 pass：lib/index.js（host 空 apply）+ lib/client.js（CJS factory）
-pnpm test           # node --test + 类型剥离：124 项（规则/清单/图表决策/golden set/水印配置/构建产物）
+pnpm test           # node --test + 类型剥离：128 项（规则/清单/图表决策/golden set/水印配置/构建产物）
 ```
 
 装机（web/desktop 两 profile 均已装）：profile `package.json` 的 dependencies 写 `dsh-local-rich-render: file:L:/dsh/.local-deploy/rich-render-plugin`，`dsh.profile.bundles` 追加 `dsh-local-rich-render`，profile 目录直跑 `pnpm install`（desktop 拒 `dsh plugin add` CLI）。
@@ -156,6 +156,7 @@ v2 已上线：行数 2~550（实现容差）、纯数字正则（含科学计�
 - 颜色语法：写在编号后，如 `1.[#e8f0fe]`、`2.1.[red]`；方括号内是一个填充色（不是 fill/border 两个值），只控制填充，文字颜色按亮度自动取黑/白；省略用主题 surface。支持命名色、hex、`tab:*`；配色优化后置。
 - box 内容按标准 Markdown 渲染（连续行同段、空行分段）；渲染器只做视觉容器（外框/底色/圆角/内边距/等高），不做“第一行标签、第二行标题”这类语义角色推断；模型自行使用粗体、斜体、引用、列表。
 - 视觉（v0.9.3）：整块 stack 只画 1px `border-l2` 外框（10px 内边距、10px 圆角），**容器本身透明**；每个 box 默认浅灰底 `--dsw-static-neutral-100`（rgb(245,245,245)）、8px 圆角、**无边框**，层与层之间 10px 间隙；`[颜色]` 显式填充优先于默认灰。深色主题下方块改用 `bg-layer-2` 暗色面。不用 `bg-base`：平台把消息区底色设为半透明白（实测 `rgba(255,255,255,0.5)`），方块跟随它会与页面同色。
+- 对齐（v0.9.4，自动规则，不扩展 `[]` 语法）：box 内可见文字（`stripInline` 去掉 inline Markdown 标记、忽略空白）少于 10 个字符时整体居中，否则左对齐；`[颜色]` 仍只控制填充。阈值与实现见 `src/rules/stack-align.ts`。
 - 上限与回退：不设硬上限；编号无效或解析失败时整块回退为代码块，静默。
 
 ### tree（文件/目录树）
@@ -263,6 +264,10 @@ spec 设想独立 channel `/rich-render`。实际：自定义 channel 的 `rpc.h
 ## 修订记录（2026-10-25，v0.2.1）
 
 persona.md 措辞修订（用户编辑，无代码改动，测试 108/108 仍绿）：富渲染总则改为「解释论证默认连贯段落」，收紧原生无序列表与有序列表的使用条件；stack 用途扩展为「同一阶段内多个方向或方案的分组说明」并写明与多级列表的取舍（回应上面"stack 未被自发使用"观察项）；「选择」节从条目列表改为连贯段落。persona 为运行时资产，宿主启动时一次性读入。desktop profile 已 remove+add 刷新至 0.2.1（运行中的桌面端重启后生效）；web profile 仍装 0.2.0（persona 为旧版），需要时同法刷新。
+
+## 修订记录（2026-10-27，v0.9.4）
+
+用户要求的 stack 排版规则（明确不扩展 `[]` 语法）：自动按内容长度对齐——box 内可见文字（`stripInline` 去 inline 标记、忽略空白）少于 10 个字符整体居中，否则左对齐。实现为纯函数 `src/rules/stack-align.ts` 的 `stackAlign`，`StackView` 把结果写进 box 的 inline `text-align`；不解析任何新标记，persona 不变。新增 `test/stack-align.test.mjs` 覆盖 9/10 边界、粗体/代码/链接/图片语法不计数、空白不计数、空框居中。两 profile 已刷，桌面端重启生效。
 
 ## 修订记录（2026-10-27，v0.9.3）
 
