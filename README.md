@@ -7,7 +7,7 @@
 | 项 | 值 |
 |---|---|
 | 包名 | `dsh-local-rich-render` |
-| 版本 | `0.9.4`（`private`，不发布） |
+| 版本 | `0.9.5`（`private`，不发布） |
 | 类型 | host + client bundle（`dsh.client.platform: web`，自带 `dsh.bundle.patch`） |
 | 宿主半区入口 | `lib/index.js`（由 `index.mjs` 构建；预构建产物随仓库提交） |
 | 浏览器半区入口 | `lib/client.js`（CJS factory，预构建产物随仓库提交） |
@@ -130,6 +130,11 @@ v2 已上线：行数 2~550（实现容差）、纯数字正则（含科学计�
 
 ## mindmap / stack / tree / todo / timeline / tab / prototype-choices 决策（2026-10-24 已实现并实机验收；timeline 2026-10-25；tab 2026-10-26；prototype-choices 2026-10-26）
 
+### 围栏统一外框（v0.9.5）
+
+- 所有显式围栏（mindmap / stack / tree / todo / timeline / tab / prototype-choices / matplotlib）根节点共用 `.dshr-fence`：1px `border-l2` + 10px 圆角，即 stack 原先那个不明显的整体轮廓。
+- 各组件保留自己的内边距与内部结构；原先自带的 `border-l1` 边框与 8–12px 圆角移除，改由共享类统一。mindmap 的内层滚动框边框并入外框；timeline / tab / prototype-choices 补内边距，避免内容贴边。
+
 ### mindmap（显式环境，取代自动升格）
 
 - 围栏 `mindmap`，不提供 `flow` 别名；内容只接受嵌套无序列表；根在围栏内。
@@ -192,7 +197,7 @@ v2 已上线：行数 2~550（实现容差）、纯数字正则（含科学计�
 
 - 围栏 `tab`，不提供别名；每个标签一行 `@标签名`（非缩进行；```/~~~ 内层围栏内的 `@` 视为内容，不切页），其后到下一个 `@` 的所有行是该标签的 Markdown（空行含在内，内层代码围栏保持原样）。
 - 2–30 个标签；标签纯文本（stripInline 剥行内标记）、≤60 字；首标签之前只允许空行，出现非空内容整体回退为围栏正文（不静默丢弃）。
-- 视图：复用 dual 页签按钮语法（`dshr-tabs-bar/-tab/-pane`，样式同 `dshr-dual-tab`、左对齐、横向滚动），`role=tablist/tab/tabpanel`；仅渲染选中页；选中态是组件本地 state（默认第一页），不写回会话。
+- 视图：经典线型 tab（Ant Design line / Material underline tabs）——标签按内容宽度排布，`flex: 1 0 auto` 把剩余宽度均分、整行铺满（两端对齐；标签过多或过长时横向滚动，不截断）；底部一条 `border-l1` 浅分隔线；标签 13px/20px、文字居中，未选中 `label-secondary`，选中 `label-primary` + 600 字重 + 2px 主色下划线（左右各留 9px，压在分隔线上）。页内容用默认 `MarkdownText`（与普通段落同字号同色，v0.9.5 起不再 `compact`）。`role=tablist/tab/tabpanel`；仅渲染选中页；选中态是组件本地 state（默认第一页），不写回会话。
 - persona：按标签分组、点选切换的并列条目用 `tab`，优先于无序列表堆叠（「标签 + 对应内容」型：表达框架、命令速查、参数说明）。
 
 ### prototype-choices（方案示意，2026-10-26）
@@ -264,6 +269,10 @@ spec 设想独立 channel `/rich-render`。实际：自定义 channel 的 `rpc.h
 ## 修订记录（2026-10-25，v0.2.1）
 
 persona.md 措辞修订（用户编辑，无代码改动，测试 108/108 仍绿）：富渲染总则改为「解释论证默认连贯段落」，收紧原生无序列表与有序列表的使用条件；stack 用途扩展为「同一阶段内多个方向或方案的分组说明」并写明与多级列表的取舍（回应上面"stack 未被自发使用"观察项）；「选择」节从条目列表改为连贯段落。persona 为运行时资产，宿主启动时一次性读入。desktop profile 已 remove+add 刷新至 0.2.1（运行中的桌面端重启后生效）；web profile 仍装 0.2.0（persona 为旧版），需要时同法刷新。
+
+## 修订记录（2026-10-27，v0.9.5）
+
+用户反馈 tab 控件观感差：标签 12px 过小、页内容用 `compact` 变淡变小、整体挤在一起且没有切换感；并要求所有围栏环境有统一的不明显外框。参照经典线型 tab（Ant Design line / Material underline tabs）重做：标签按内容宽度排布、`flex: 1 0 auto` 均分剩余宽度铺满整行（两端对齐；标签过长/过多时横向滚动，不截断，13px/20px）、底部一条 `border-l1` 浅分隔线 + 选中项 2px 主色下划线（左右各留 9px）、未选中 `label-secondary`/选中 `label-primary`+600；页内容恢复默认 `MarkdownText`（与普通段落同字号同色）。新增共享 `.dshr-fence`（1px `border-l2` + 10px 圆角）套在全部显式围栏根节点上：stack 原外框迁入该类，checklist/tree/mpl 的 `border-l1` 与旧圆角移除，mindmap 内层滚动框边框并入外框，timeline/tab/prototype-choices 补内边距。128 项测试仍绿；两 profile 已刷，桌面端重启生效。
 
 ## 修订记录（2026-10-27，v0.9.4）
 

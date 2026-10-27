@@ -179,6 +179,12 @@ export const STYLESHEET = `
   border: 0;
 }
 
+/* ---- Shared fence frame: one quiet outline around every explicit fence ---- */
+.dshr-fence {
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 10px;
+}
+
 /* ---- Icon-card group ---- */
 .dshr-cards {
   display: flex;
@@ -274,8 +280,6 @@ export const STYLESHEET = `
   display: flex;
   flex-direction: column;
   padding: 20px 22px 22px;
-  border: 1px solid var(--dsw-alias-border-l1);
-  border-radius: var(--dsw-radius-lg, 12px);
   background: var(--dsw-alias-bg-layer-1);
 }
 
@@ -481,40 +485,52 @@ export const STYLESHEET = `
   color: var(--dsw-alias-link);
 }
 
-/* ---- Tab fence: same button grammar as the dual bar, left-aligned ---- */
+/* ---- Tab fence: equal-width line tabs with an underline indicator ---- */
 .dshr-tabs {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 14px;
+  padding: 12px 14px;
 }
 
 .dshr-tabs-bar {
   display: flex;
-  gap: 2px;
+  align-items: stretch;
   overflow-x: auto;
+  border-bottom: 1px solid var(--dsw-alias-border-l1);
 }
 
 .dshr-tabs-tab {
-  flex: none;
-  padding: 2px 10px;
+  flex: 1 0 auto;
+  position: relative;
+  padding: 8px 9px 10px;
   border: none;
-  border-radius: var(--dsw-radius-sm, 6px);
   background: transparent;
   color: var(--dsw-alias-label-secondary);
-  font-size: 12px;
+  font-size: 13px;
   line-height: 20px;
   white-space: nowrap;
   cursor: pointer;
 }
 
 .dshr-tabs-tab:hover {
-  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-primary);
 }
 
 .dshr-tabs-tab[data-active] {
-  background: var(--dsw-alias-interactive-bg-hover);
   color: var(--dsw-alias-label-primary);
   font-weight: 600;
+}
+
+.dshr-tabs-tab[data-active]::after {
+  content: '';
+  position: absolute;
+  left: 9px;
+  right: 9px;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--dsw-alias-label-primary);
 }
 
 .dshr-tabs-pane {
@@ -526,6 +542,7 @@ export const STYLESHEET = `
   display: flex;
   flex-direction: column;
   gap: 10px;
+  padding: 12px 14px;
 }
 
 .dshr-choices-list {
@@ -715,6 +732,7 @@ export const STYLESHEET = `
   display: flex;
   flex-direction: column;
   gap: 8px;
+  padding: 12px 14px;
 }
 
 .dshr-timeline {
@@ -786,13 +804,11 @@ export const STYLESHEET = `
 /* ---- Mindmap fence (anyblock list2node idiom, multi-root) ---- */
 .dshr-mm {
   position: relative;
+  padding: 12px;
 }
 
 .dshr-mm-scroll {
   overflow: auto;
-  border: 1px solid var(--dsw-alias-border-l1);
-  border-radius: 8px;
-  padding: 12px;
 }
 
 .dshr-mm-zoompane {
@@ -923,9 +939,7 @@ export const STYLESHEET = `
 
 /* ---- Tree fence ---- */
 .dshr-tree {
-  border: 1px solid var(--dsw-alias-border-l1);
-  border-radius: 8px;
-  padding: 8px 12px;
+  padding: 10px 12px;
   overflow-x: auto;
   font-size: 13px;
 }
@@ -973,8 +987,6 @@ export const STYLESHEET = `
   align-items: center;
   gap: 10px;
   padding: 10px;
-  border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: 10px;
 }
 
 .dshr-stack-layer {
@@ -1003,9 +1015,7 @@ body[data-ds-dark-theme] .dshr-stack-box {
 
 /* ---- Matplotlib cell ---- */
 .dshr-mpl {
-  border: 1px solid var(--dsw-alias-border-l1);
-  border-radius: 8px;
-  padding: 8px 10px;
+  padding: 10px 12px;
 }
 
 .dshr-mpl-tabs {

@@ -84,7 +84,7 @@ export function TreeView({ segment }: TreeViewProps) {
     })
   }
   return (
-    <div className="dshr-tree" role="tree">
+    <div className="dshr-tree dshr-fence" role="tree">
       {segment.trees.map((entry, index) => (
         <Row key={index} entry={entry} path="" expanded={expanded} toggle={toggle} />
       ))}

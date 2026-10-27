@@ -48,7 +48,7 @@ export function ChecklistView({ segment, labels, chrome }: ChecklistViewProps) {
   }
   const title = segment.title === '' ? chrome.checklistTitle : segment.title
   return (
-    <section className="dshr-checklist">
+    <section className="dshr-checklist dshr-fence">
       <div className="dshr-checklist-head">
         <div className="dshr-checklist-title"><InlineMarkdown text={title} labels={labels} /></div>
         <div className="dshr-checklist-count">{countText}</div>

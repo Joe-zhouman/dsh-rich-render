@@ -1,7 +1,9 @@
 /**
- * Tab: the explicit `tab` fence as one segmented control over labeled pages.
- * The selected page is component-local state (first page by default); only
- * the active page renders. Clicking never writes back to the session.
+ * Tab: the explicit `tab` fence as a line-tab bar (equal-width segments, an
+ * underline on the active label) over labeled pages. Page bodies render as
+ * normal body Markdown; the selected page is component-local state (first page
+ * by default), only the active page renders, and clicking never writes back to
+ * the session.
  */
 
 import { useState } from 'react'
@@ -21,7 +23,7 @@ export function TabView({ segment, labels }: TabViewProps) {
   const index = Math.min(active, segment.tabs.length - 1)
   const current = segment.tabs[index]
   return (
-    <div className="dshr-tabs">
+    <div className="dshr-tabs dshr-fence">
       <div className="dshr-tabs-bar" role="tablist">
         {segment.tabs.map((tab, tabIndex) => (
           <button
@@ -31,6 +33,7 @@ export function TabView({ segment, labels }: TabViewProps) {
             aria-selected={tabIndex === index}
             className="dshr-tabs-tab"
             data-active={tabIndex === index || undefined}
+            title={tab.label}
             onClick={() => { setActive(tabIndex) }}
           >
             {tab.label}
@@ -39,7 +42,7 @@ export function TabView({ segment, labels }: TabViewProps) {
       </div>
       <div className="dshr-tabs-pane" role="tabpanel">
         {current !== undefined && current.body !== '' && (
-          <MarkdownText text={current.body} labels={labels} pathImages={pathImages} variant="compact" />
+          <MarkdownText text={current.body} labels={labels} pathImages={pathImages} />
         )}
       </div>
     </div>

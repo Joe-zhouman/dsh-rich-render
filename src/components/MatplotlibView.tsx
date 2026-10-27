@@ -53,7 +53,7 @@ export function MatplotlibView({ segment, labels, chrome }: MatplotlibViewProps)
   }
   const image = result?.status === 'success' ? `data:image/png;base64,${result.image}` : undefined
   return (
-    <div className="dshr-mpl">
+    <div className="dshr-mpl dshr-fence">
       <div className="dshr-mpl-tabs" role="tablist">
         <button type="button" role="tab" aria-selected={tab === 'code'} className={tab === 'code' ? 'dshr-mpl-tab active' : 'dshr-mpl-tab'} onClick={() => setTab('code')}>{chrome.mplCode}</button>
         <button type="button" role="tab" aria-selected={tab === 'chart'} className={tab === 'chart' ? 'dshr-mpl-tab active' : 'dshr-mpl-tab'} onClick={() => setTab('chart')}>{chrome.mplChart}</button>

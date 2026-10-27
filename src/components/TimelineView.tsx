@@ -18,7 +18,7 @@ export interface TimelineViewProps {
 /** Draw the upgraded timeline. */
 export function TimelineView({ segment, labels }: TimelineViewProps) {
   return (
-    <div className="dshr-timelinewrap">
+    <div className="dshr-timelinewrap dshr-fence">
       {segment.title !== '' && (
         <div className="dshr-cards-title"><InlineMarkdown text={segment.title} labels={labels} /></div>
       )}

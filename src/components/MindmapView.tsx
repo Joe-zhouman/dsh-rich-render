@@ -62,7 +62,7 @@ const ZOOM_STEP = 0.25
 export function MindmapView({ segment, labels }: MindmapViewProps) {
   const [zoom, setZoom] = useState(1)
   return (
-    <div className="dshr-mm">
+    <div className="dshr-mm dshr-fence">
       <div className="dshr-mm-scroll" style={{ maxHeight: `${Math.round(480 * zoom)}px` }}>
         <div
           className="dshr-mm-zoompane"

@@ -37,7 +37,7 @@ export interface StackViewProps {
 /** Draw the layers. */
 export function StackView({ segment, labels }: StackViewProps) {
   return (
-    <div className="dshr-stack">
+    <div className="dshr-stack dshr-fence">
       {segment.layers.map((layer, index) => (
         <div key={index} className="dshr-stack-layer">
           {layer.boxes.map((box, boxIndex) => (

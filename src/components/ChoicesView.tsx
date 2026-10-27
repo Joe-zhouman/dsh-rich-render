@@ -28,7 +28,7 @@ export function ChoicesView({ segment, labels, mentions, chrome }: ChoicesViewPr
   const index = Math.min(active, segment.choices.length - 1)
   const current = segment.choices[index]
   return (
-    <div className="dshr-choices">
+    <div className="dshr-choices dshr-fence">
       {segment.title !== '' && (
         <div className="dshr-cards-title"><InlineMarkdown text={segment.title} labels={labels} /></div>
       )}
