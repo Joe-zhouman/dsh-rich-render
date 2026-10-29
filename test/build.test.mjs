@@ -43,13 +43,13 @@ test('emits the ESM host entry and the module-loader client factory', async () =
   assert.equal(run.status, 0, 'the artifacts are only judged from a successful build')
 
   const host = await import(pathToFileURL(join(root, 'lib/index.js')).href)
-  assert.equal(host.name, 'dsh-local-rich-render')
+  assert.equal(host.name, 'dsh-rich-render')
   assert.equal(typeof host.apply, 'function')
 
   const client = readFileSync(join(root, 'lib/client.js'), 'utf8')
   const opening = client.slice(0, 400).replace(/\s+/gu, ' ')
   assert.ok(
-    opening.startsWith('window.__ModuleLoader__.load({ id: "dsh-local-rich-render", factory: (require) => { var module = { exports: {} }; var exports = module.exports;'),
+    opening.startsWith('window.__ModuleLoader__.load({ id: "dsh-rich-render", factory: (require) => { var module = { exports: {} }; var exports = module.exports;'),
     `lib/client.js opens with something other than the module-loader factory:\n${opening}`,
   )
   assert.match(client, /return module\.exports;\s*\}\s*\}\);/u, 'the factory must close with the module exports')
@@ -162,7 +162,7 @@ function stubContext() {
 test('the client artifact loads through the module table and replaces the assistant-step seat', () => {
   assert.equal(buildOnce().status, 0, 'the artifact is only judged from a successful build')
   const { dom, loaded, asked } = loadClient()
-  assert.equal(loaded.id, 'dsh-local-rich-render')
+  assert.equal(loaded.id, 'dsh-rich-render')
   assert.equal(typeof loaded.exports.apply, 'function')
   assert.deepEqual([...loaded.exports.inject], ['slots', 'locale', 'connection', 'theme'])
   assert.deepEqual(
@@ -175,7 +175,7 @@ test('the client artifact loads through the module table and replaces the assist
   loaded.exports.apply(ctx)
 
   assert.equal(themeCalls.length, 1)
-  assert.equal(themeCalls[0][0], 'dsh-local-rich-render:font')
+  assert.equal(themeCalls[0][0], 'dsh-rich-render:font')
   assert.match(themeCalls[0][1]['--dsw-font-family'].light, /Noto Sans SC/u)
   assert.equal(themeCalls[0][1]['--dsw-font-family'].light, themeCalls[0][1]['--dsw-font-family'].dark)
   assert.deepEqual(localeNames, ['richRender'])
@@ -190,7 +190,7 @@ test('the client artifact loads through the module table and replaces the assist
   assert.equal(overlay.options.id, 'rich-render-watermark')
   assert.equal(typeof overlay.component, 'function', 'the watermark layer is a React component')
 
-  const style = dom.window.document.querySelector('style[data-plugin-css="dsh-local-rich-render/styles"]')
+  const style = dom.window.document.querySelector('style[data-plugin-css="dsh-rich-render/styles"]')
   assert.notEqual(style, null, 'apply installs the plugin stylesheet')
   assert.match(style.textContent, /\.dshr-flow-root/u, 'the stylesheet carries the flow shell')
   assert.match(style.textContent, /\.dshr-wm-img/u, 'the stylesheet carries the watermark layer')

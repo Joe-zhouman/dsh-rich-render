@@ -1,3 +1,3 @@
 - insert:
-    - id: local-rich-render
-      name: dsh-local-rich-render
+    - id: rich-render
+      name: dsh-rich-render

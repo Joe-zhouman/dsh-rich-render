@@ -1,5 +1,5 @@
 /**
- * Host half of dsh-local-rich-render: persona injection (merged environments
+ * Host half of dsh-rich-render: persona injection (merged environments
  * section always; a matplotlib section whenever enabled — its text stays
  * empty until the startup probe fills the detected versions) plus the
  * /rich-render RPC channel the browser half calls for matplotlib
@@ -21,7 +21,7 @@ import { buildSections, isMainSession } from './src/host/persona.ts'
 import { DETECT_PROGRAM, detectFromOutput } from './src/host/detect.ts'
 import { MatplotlibRunner } from './src/host/matplotlib.ts'
 
-export const name = 'dsh-local-rich-render'
+export const name = 'dsh-rich-render'
 
 export const inject = ['systemPrompt', 'shell', 'connection']
 

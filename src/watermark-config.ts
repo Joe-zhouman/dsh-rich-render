@@ -29,7 +29,7 @@ export const DEFAULT_WATERMARK: WatermarkConfig = {
   size: 42,
 }
 
-const STORAGE_KEY = 'dsh-local-rich-render:watermark'
+const STORAGE_KEY = 'dsh-rich-render:watermark'
 
 const CORNERS: readonly WatermarkCorner[] = ['tl', 'tr', 'bl', 'br']
 

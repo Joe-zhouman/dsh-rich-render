@@ -1,5 +1,5 @@
 /**
- * Browser half of dsh-local-rich-render: replaces the assistant-step Chat
+ * Browser half of dsh-rich-render: replaces the assistant-step Chat
  * node renderer with a rule-driven rich renderer (cards, timelines, dual-view
  * tables with charts, callouts, mindmaps) and adds the watermark overlay.
  *
@@ -25,7 +25,7 @@ const FONT_STACK = "'Noto Sans SC', 'Noto Sans CJK SC', -apple-system, BlinkMacS
 /** Install the stylesheet, dictionary, the matplotlib bridge, the assistant-step replacement, and the watermark overlay. */
 export function apply(ctx: ClientCtx): void {
   ctx.effect(() => injectStylesheet(), 'rich-render: stylesheet')
-  ctx.effect(() => ctx.theme.overrideTokens('dsh-local-rich-render:font', {
+  ctx.effect(() => ctx.theme.overrideTokens('dsh-rich-render:font', {
     '--dsw-font-family': { light: FONT_STACK, dark: FONT_STACK },
     '--dsw-font-family-brand': { light: FONT_STACK, dark: FONT_STACK },
   }), 'rich-render: Noto Sans CJK typography')

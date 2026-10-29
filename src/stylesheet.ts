@@ -8,7 +8,7 @@
 import { STYLESHEET } from './styles.ts'
 
 /** The tag identity: package id plus one fixed sheet name. */
-const TAG_ID = 'dsh-local-rich-render/styles'
+const TAG_ID = 'dsh-rich-render/styles'
 
 /**
  * Install the stylesheet once; the returned disposer removes exactly this
@@ -19,7 +19,7 @@ export function injectStylesheet(): () => void {
   if (typeof document === 'undefined') return () => {}
   if (document.querySelector(`style[data-plugin-css="${TAG_ID}"]`) !== null) return () => {}
   const tag = document.createElement('style')
-  tag.dataset.plugin = 'dsh-local-rich-render'
+  tag.dataset.plugin = 'dsh-rich-render'
   tag.dataset.pluginCss = TAG_ID
   tag.textContent = STYLESHEET
   document.head.appendChild(tag)

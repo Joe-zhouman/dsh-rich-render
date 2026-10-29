@@ -25,7 +25,7 @@ test('a written config round-trips', () => {
 
 test('malformed or hostile storage falls back field by field', () => {
   localStorage.clear()
-  localStorage.setItem('dsh-local-rich-render:watermark', '{"enabled":"yes","image":5,"opacity":9,"corner":"middle","size":"big"}')
+  localStorage.setItem('dsh-rich-render:watermark', '{"enabled":"yes","image":5,"opacity":9,"corner":"middle","size":"big"}')
   const config = readWatermark()
   assert.equal(config.enabled, false)
   assert.equal(config.image, '')
@@ -36,7 +36,7 @@ test('malformed or hostile storage falls back field by field', () => {
 
 test('non-JSON storage degrades to the defaults without throwing', () => {
   localStorage.clear()
-  localStorage.setItem('dsh-local-rich-render:watermark', 'not json at all')
+  localStorage.setItem('dsh-rich-render:watermark', 'not json at all')
   assert.deepEqual(readWatermark(), DEFAULT_WATERMARK)
 })
 

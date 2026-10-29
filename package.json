@@ -1,5 +1,5 @@
 {
-  "name": "dsh-local-rich-render",
+  "name": "dsh-rich-render",
   "version": "0.9.7",
   "private": true,
   "type": "module",
@@ -26,7 +26,7 @@
   },
   "scripts": {
     "build": "node ../../node_modules/tsdown/dist/run.mjs --config tsdown.config.mjs --config-loader native",
-    "build:client": "node ../../node_modules/tsdown/dist/run.mjs --config tsdown.config.mjs --config-loader native -F dsh-local-rich-render/client",
+    "build:client": "node ../../node_modules/tsdown/dist/run.mjs --config tsdown.config.mjs --config-loader native -F dsh-rich-render/client",
     "test": "node --test --experimental-strip-types test/*.test.mjs"
   }
 }

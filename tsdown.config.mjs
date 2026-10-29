@@ -19,7 +19,7 @@
  */
 
 /** Package name; the loader handoff id and the client config's filter name. */
-const ID = 'dsh-local-rich-render'
+const ID = 'dsh-rich-render'
 
 /** Module-table specifiers this bundle imports at runtime and must not inline. */
 const MODULE_TABLE_KEYS = [

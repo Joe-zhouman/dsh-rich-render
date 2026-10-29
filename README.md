@@ -1,12 +1,12 @@
-# dsh-local-rich-render（富渲染插件）
+# dsh-rich-render（富渲染插件）
 
 ## 仓库信息
 
-本目录是 `dsh-local-rich-render` 的源码仓库（git，`main` 分支，初始提交 v0.9.1，2026-10-26）。
+本目录是 `dsh-rich-render` 的源码仓库（git，`main` 分支，初始提交 v0.9.1，2026-10-26）。
 
 | 项 | 值 |
 |---|---|
-| 包名 | `dsh-local-rich-render` |
+| 包名 | `dsh-rich-render` |
 | 版本 | `0.9.7`（`private`，不发布） |
 | 类型 | host + client bundle（`dsh.client.platform: web`，自带 `dsh.bundle.patch`） |
 | 宿主半区入口 | `lib/index.js`（由 `index.mjs` 构建；预构建产物随仓库提交） |
@@ -15,9 +15,9 @@
 | 部署机工作副本 | `L:\dsh\.local-deploy\rich-render-plugin\`；`web`/`desktop` 两 profile 以 `file:` 依赖安装 |
 | 构建依赖 | dsh 检出的 `node_modules/tsdown` 与 `vendor/schemastery`（`package.json` 脚本与 devDependencies 里的 `../../`），因此本仓库必须位于 dsh 检出内才能构建 |
 
-`lib/` 与 `src/` 必须同一次提交：profile 安装后只运行 `lib/`，不读 `src/`（与 `dsh-local-soul-presets` 同一约定）。`node_modules/`、`.cache/`（matplotlib 探测缓存）忽略。
+`lib/` 与 `src/` 必须同一次提交：profile 安装后只运行 `lib/`，不读 `src/`（与 `dsh-soul-presets` 同一约定）。`node_modules/`、`.cache/`（matplotlib 探测缓存）忽略。
 
-- 位置：`L:\dsh\.local-deploy\rich-render-plugin\`（包名 `dsh-local-rich-render`，私有，不发布）
+- 位置：`L:\dsh\.local-deploy\rich-render-plugin\`（包名 `dsh-rich-render`，私有，不发布）
 - 日期：2026-10-15 首版（v0.1.0）
 - 需求：`L:\works\news\docs\reports\dsh富渲染插件需求-v1-2026-10-14.md`（规则集与其 v2 修订：三图表决策树/饼图补充片/表格图标列/思维导图）
 - 调研依据：`L:\dsh\docs\superpowers\findings\dsh-client-render-pipeline-seam.md`、`findings-external.md` 的 anyblock 节
@@ -64,9 +64,9 @@ pnpm run build      # tsdown 双 pass：lib/index.js（host 空 apply）+ lib/cl
 pnpm test           # node --test + 类型剥离：138 项（规则/清单/图表决策/golden set/水印配置/构建产物）
 ```
 
-装机（web/desktop 两 profile 均已装）：profile `package.json` 的 dependencies 写 `dsh-local-rich-render: file:L:/dsh/.local-deploy/rich-render-plugin`，`dsh.profile.bundles` 追加 `dsh-local-rich-render`，profile 目录直跑 `pnpm install`（desktop 拒 `dsh plugin add` CLI）。
+装机（web/desktop 两 profile 均已装）：profile `package.json` 的 dependencies 写 `dsh-rich-render: file:L:/dsh/.local-deploy/rich-render-plugin`，`dsh.profile.bundles` 追加 `dsh-rich-render`，profile 目录直跑 `pnpm install`（desktop 拒 `dsh plugin add` CLI）。
 
-**改版刷新**：file: 依赖按 spec 判等，改完必须 `pnpm remove dsh-local-rich-render && pnpm add dsh-local-rich-render@file:L:/dsh/.local-deploy/rich-render-plugin`，再重启 web/桌面端。
+**改版刷新**：file: 依赖按 spec 判等，改完必须 `pnpm remove dsh-rich-render && pnpm add dsh-rich-render@file:L:/dsh/.local-deploy/rich-render-plugin`，再重启 web/桌面端。
 
 ## 降级承诺（mermaid 反面）
 
@@ -278,7 +278,7 @@ persona.md 措辞修订（用户编辑，无代码改动，测试 108/108 仍绿
 
 ## 修订记录（2026-10-27，v0.9.7）
 
-用户偏好 Google Noto Sans CJK（手机同款）：client 半边通过 `ctx.theme.overrideTokens('dsh-local-rich-render:font', ...)` 把 `--dsw-font-family` 与 `--dsw-font-family-brand` 覆盖为 `'Noto Sans SC', 'Noto Sans CJK SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif`（light/dark 同值）；只改 UI 正文字体，`--ds-font-family-code` 不动。本机已装有 Noto Sans SC（Regular/Medium/Bold）与 Noto Sans CJK SC，无需下载或安装。字体随富渲染插件启用/停用；禁用插件即回系统字体。build.test 的 client stub 补 `theme` 并断言覆盖层。138 项测试仍绿。两 profile 已刷，桌面端重启生效。
+用户偏好 Google Noto Sans CJK（手机同款）：client 半边通过 `ctx.theme.overrideTokens('dsh-rich-render:font', ...)` 把 `--dsw-font-family` 与 `--dsw-font-family-brand` 覆盖为 `'Noto Sans SC', 'Noto Sans CJK SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif`（light/dark 同值）；只改 UI 正文字体，`--ds-font-family-code` 不动。本机已装有 Noto Sans SC（Regular/Medium/Bold）与 Noto Sans CJK SC，无需下载或安装。字体随富渲染插件启用/停用；禁用插件即回系统字体。build.test 的 client stub 补 `theme` 并断言覆盖层。138 项测试仍绿。两 profile 已刷，桌面端重启生效。
 
 ## 修订记录（2026-10-27，v0.9.6）
 
