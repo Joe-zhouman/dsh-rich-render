@@ -9,7 +9,7 @@
 | 项 | 值 |
 |---|---|
 | 包名 | `dsh-rich-render` |
-| 版本 | `0.9.14`（`private`，不发布） |
+| 版本 | `0.9.15`（`private`，不发布） |
 | 类型 | host + client bundle（`dsh.client.platform: web`，自带 `dsh.bundle.patch`） |
 | 宿主半区入口 | `lib/index.js`（由 `index.mjs` 构建；预构建产物随仓库提交） |
 | 浏览器半区入口 | `lib/client.js`（CJS factory，预构建产物随仓库提交） |
@@ -282,6 +282,9 @@ spec 设想独立 channel `/rich-render`。实际：自定义 channel 的 `rpc.h
 
 persona.md 措辞修订（用户编辑，无代码改动，测试 108/108 仍绿）：富渲染总则改为「解释论证默认连贯段落」，收紧原生无序列表与有序列表的使用条件；stack 用途扩展为「同一阶段内多个方向或方案的分组说明」并写明与多级列表的取舍（回应上面"stack 未被自发使用"观察项）；「选择」节从条目列表改为连贯段落。persona 为运行时资产，宿主启动时一次性读入。desktop profile 已 remove+add 刷新至 0.2.1（运行中的桌面端重启后生效）；web profile 仍装 0.2.0（persona 为旧版），需要时同法刷新。
 
+## 修订记录（2026-11-01，v0.9.15）
+
+用户对行内代码提了四点：圆角太大、浅色模式太浅、有多余外框、轮廓比周围文字高，并给了一份 zcode 的参考实现。平台 `MarkdownText.module.css` 的 `.markdown :not(pre) > code` 是 `inline-flex` + `8px` 圆角 + `0.5px` `border-l1` 描边 + `--dsw-alias-markdown-inline-code`（浅色下是 250 的灰）。插件样式表里加了一条作用域覆盖：`.dshr-flow-body.dshr-flow-body :not(pre) > code { display: inline; padding: 1px 6px; border: 0; border-radius: 4px; background: color-mix(in srgb, currentColor 10%, transparent); box-decoration-break: clone; }`——圆角 4px、去掉描边、底色改成当前文字色的 10%（浅色约 #e6e6e6，深色自动变成 10% 白），`inline` + 1px 内边距让药丸高度跟着文字走，而不是撑成更高的 flex 盒。双写容器类名是为了压过平台那条同特异性的 `.markdown …` 规则（否则胜负只取决于样式表加载顺序）；作用域限定在富渲染的 `.dshr-flow-body`，工具块与界面其它部分保持平台样式。字号沿用平台的 `0.875em`（约 12px）。160 项测试全绿。两 profile 已刷，桌面端重启生效。
 ## 修订记录（2026-11-01，v0.9.14）
 
 用户看完渲染效果后改口：Fira Code 作为**展示面**不如 Consolas 好看（Fira Code 的 `calt` 连字让 `=>`、`!=`、`!==` 变形成箭头和 ≠，整体也偏宽；Consolas 在 Windows 上更紧凑、字形更规矩）。`--ds-font-family-code` 改为 `Consolas, 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, 'Liberation Mono', 'Courier New', 'Microsoft YaHei UI', 'PingFang SC', 'Noto Sans CJK SC'`——Windows 上命中 Consolas，没有 Consolas 的机器（macOS）仍落到 Fira Code，再往后是平台等宽与中文字体。UI 字体栈不动。`build.test.mjs` 的等宽断言改为校验 `Consolas` 打头。160 项测试全绿。两 profile 已刷，桌面端重启生效。
