@@ -82,8 +82,8 @@ export const ImageView = memo(function ImageView({ segment, chrome }: {
     )
   }
   const label = copyState === 'done'
-    ? chrome.imageCopied
-    : copyState === 'error' ? chrome.imageCopyFailed : chrome.imageCopy
+    ? chrome.copied
+    : copyState === 'error' ? chrome.copyFailed : chrome.copy
   return (
     <div className="dshr-fence dshr-image">
       <img className="dshr-image-img" src={url} alt={segment.alt}

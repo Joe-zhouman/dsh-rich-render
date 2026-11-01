@@ -15,6 +15,7 @@ export const zh: Readonly<Record<string, string>> = {
   truncated: '内容已截断（共 {total} 项）',
   copy: '复制',
   copied: '已复制',
+  copyFailed: '复制失败',
   codeBlockTitle: '代码块',
   codeBlockWrap: '自动换行',
   codeBlockUnwrap: '取消换行',
@@ -35,9 +36,6 @@ export const zh: Readonly<Record<string, string>> = {
   mplFailed: '执行失败',
   mplDownloadPng: '下载 PNG',
   // Image-card chrome.
-  imageCopy: '复制',
-  imageCopied: '已复制',
-  imageCopyFailed: '复制失败',
   imagePreviewFailed: '图片无法预览',
   // Callout alert titles (GitHub alert flavors).
   calloutNote: '注意',
@@ -68,6 +66,7 @@ export const en: Readonly<Record<string, string>> = {
   truncated: 'Truncated ({total} items total)',
   copy: 'Copy',
   copied: 'Copied',
+  copyFailed: 'Copy failed',
   codeBlockTitle: 'Code block',
   codeBlockWrap: 'Wrap lines',
   codeBlockUnwrap: 'Unwrap lines',
@@ -88,9 +87,6 @@ export const en: Readonly<Record<string, string>> = {
   mplFailed: 'Execution failed',
   mplDownloadPng: 'Download PNG',
   // Image-card chrome.
-  imageCopy: 'Copy',
-  imageCopied: 'Copied',
-  imageCopyFailed: 'Copy failed',
   imagePreviewFailed: 'Image preview unavailable',
   // Callout alert titles (GitHub alert flavors).
   calloutNote: 'Note',

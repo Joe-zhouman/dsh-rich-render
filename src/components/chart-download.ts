@@ -226,20 +226,22 @@ function drawLegend(
 }
 
 /**
- * Export the chart inside `host` as a downloaded PNG. Silent on failure.
+ * Rasterize the chart inside `host` to a PNG blob, legend included. Silent on
+ * failure: both export and clipboard actions treat a null as "nothing to do".
  * @param host - element containing the chart SVG; null before first paint.
  * @param chart - chart spec the SVG was drawn from.
  * @param labels - localized legend names.
+ * @returns the PNG blob, or null when the chart cannot be drawn or encoded.
  */
-export async function downloadChartPng(
+export async function chartPngBlob(
   host: HTMLElement | null,
   chart: ChartSpec,
   labels: ChartExportLabels,
-): Promise<void> {
+): Promise<Blob | null> {
   try {
-    if (host === null) return
+    if (host === null) return null
     const clone = inlineChart(host)
-    if (clone === undefined) return
+    if (clone === undefined) return null
     const baseWidth = Number(clone.getAttribute('width'))
     const baseHeight = Number(clone.getAttribute('height'))
     const entries = legendEntries(chart, labels, host)
@@ -252,7 +254,7 @@ export async function downloadChartPng(
     canvas.width = Math.max(1, Math.round(width * SCALE))
     canvas.height = Math.max(1, Math.round(height * SCALE))
     const context = canvas.getContext('2d')
-    if (context === null) return
+    if (context === null) return null
     context.scale(SCALE, SCALE)
     context.fillStyle = background
     context.fillRect(0, 0, width, height)
@@ -262,7 +264,26 @@ export async function downloadChartPng(
     context.textBaseline = 'middle'
     context.textAlign = 'start'
     drawLegend(context, entries, chart, baseWidth, baseHeight, style.color === '' ? '#333333' : style.color)
-    const blob = await canvasBlob(canvas)
+    return await canvasBlob(canvas)
+  } catch {
+    // Export is a convenience; a failed render leaves the page untouched.
+    return null
+  }
+}
+
+/**
+ * Export the chart inside `host` as a downloaded PNG. Silent on failure.
+ * @param host - element containing the chart SVG; null before first paint.
+ * @param chart - chart spec the SVG was drawn from.
+ * @param labels - localized legend names.
+ */
+export async function downloadChartPng(
+  host: HTMLElement | null,
+  chart: ChartSpec,
+  labels: ChartExportLabels,
+): Promise<void> {
+  try {
+    const blob = await chartPngBlob(host, chart, labels)
     if (blob === null) return
     const url = URL.createObjectURL(blob)
     const anchor = document.createElement('a')
@@ -272,5 +293,28 @@ export async function downloadChartPng(
     window.setTimeout(() => { URL.revokeObjectURL(url) }, 0)
   } catch {
     // Export is a convenience; a failed render leaves the page untouched.
+  }
+}
+
+/**
+ * Copy the chart inside `host` to the clipboard as a PNG.
+ * @param host - element containing the chart SVG; null before first paint.
+ * @param chart - chart spec the SVG was drawn from.
+ * @param labels - localized legend names.
+ * @returns whether the clipboard accepted the image.
+ */
+export async function copyChartPng(
+  host: HTMLElement | null,
+  chart: ChartSpec,
+  labels: ChartExportLabels,
+): Promise<boolean> {
+  try {
+    const blob = await chartPngBlob(host, chart, labels)
+    if (blob === null) return false
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+    return true
+  } catch {
+    // A host that refuses image writes (or a tainted canvas) reads as failed.
+    return false
   }
 }

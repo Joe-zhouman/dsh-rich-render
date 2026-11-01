@@ -446,7 +446,7 @@ test('markdown image syntax keeps the local-path vocabulary in native bodies; st
   const copyAction = collectStub(tree, node =>
     String(node.props?.className ?? '').includes('dshr-image-copy'))
   assert.equal(copyAction.length, 1, 'the image card carries one copy action')
-  assert.equal(copyAction[0].props['aria-label'], 'imageCopy')
+  assert.equal(copyAction[0].props['aria-label'], 'copy')
   assert.equal(typeof copyAction[0].props.children, 'object',
     'the copy action renders an icon element rather than the word')
   assert.equal(listBody.pathImages.resolve('C:/tmp/out.png'), 'http://localhost/api/file?path=C%3A%2Ftmp%2Fout.png')
@@ -684,11 +684,14 @@ test('chartable tables open on the chart with an export tab', () => {
   const tree = renderStub(element)
 
 
-  const tabs = collectStub(tree, node => node.type === 'button' && String(node.props?.className ?? '').includes('dshr-dual-tab'))
-  assert.deepEqual(tabs.map(node => node.props.children), ['viewChart', 'viewTable', 'downloadChart'])
-  assert.ok(tabs[0]?.props['data-active'], 'the chart is the default view')
-  assert.equal(tabs[1]?.props['data-active'], undefined)
-  assert.equal(typeof tabs[2]?.props.onClick, 'function', 'the export tab is wired')
+  const buttons = collectStub(tree, node =>
+    node.type === 'button' && String(node.props?.className ?? '').includes('dshr-toolbar-btn'))
+  assert.deepEqual(buttons.map(node => node.props['aria-label']),
+    ['viewTable', 'viewChart', 'copy', 'downloadChart'])
+  assert.equal(buttons[0]?.props['data-active'], undefined)
+  assert.ok(buttons[1]?.props['data-active'], 'the chart is the default view')
+  assert.equal(typeof buttons[2]?.props.onClick, 'function', 'the copy action is wired')
+  assert.equal(typeof buttons[3]?.props.onClick, 'function', 'the export action is wired')
 
   const panes = collectStub(tree, node => node.type === 'div' && node.props?.className === 'dshr-dual-pane')
   assert.equal(panes.length, 2, 'chart and table panes both stay mounted')

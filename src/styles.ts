@@ -523,37 +523,70 @@ body[data-ds-dark-theme] .dshr-flow-body.dshr-flow-body :not(pre) > code {
   display: block;
 }
 
-.dshr-dual-bar {
+/* ---- Chart fence toolbar: icon views plus chart actions, right-aligned ----
+   Shared by the dual-view table and the matplotlib cell so both fences put
+   the same controls in the same place; labels live in tooltips. */
+.dshr-toolbar {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.dshr-toolbar-views {
+  display: flex;
+  align-items: center;
   gap: 2px;
 }
 
-.dshr-dual-tab {
-  padding: 2px 10px;
-  border: none;
-  border-radius: var(--dsw-radius-sm, 6px);
+.dshr-toolbar-sep {
+  width: 1px;
+  height: 14px;
+  margin: 0 6px;
+  background: var(--dsw-alias-border-l2);
+}
+
+.dshr-toolbar-btn {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--dsw-radius-sm, 8px);
   background: transparent;
   color: var(--dsw-alias-label-secondary);
-  font-size: 12px;
-  line-height: 20px;
   cursor: pointer;
 }
 
-.dshr-dual-tab:hover {
-  background: var(--dsw-alias-interactive-bg-hover);
+.dshr-toolbar-btn .dshr-icon {
+  display: block;
 }
 
-.dshr-dual-tab[data-active] {
+.dshr-toolbar-btn:hover:not(:disabled) {
   background: var(--dsw-alias-interactive-bg-hover);
   color: var(--dsw-alias-label-primary);
-  font-weight: 600;
 }
 
-/* Export reads as an action, not a third view. */
-.dshr-dual-tab-action {
-  margin-left: 4px;
-  color: var(--dsw-alias-link);
+.dshr-toolbar-btn[data-active] {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-primary);
+}
+
+.dshr-toolbar-btn[data-state='error'] {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+.dshr-toolbar-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.dshr-toolbar-btn:focus-visible {
+  outline: 2px solid var(--dsw-alias-link);
+  outline-offset: 2px;
 }
 
 /* ---- Tab fence: equal-width line tabs with an underline indicator ---- */
@@ -1074,39 +1107,6 @@ body[data-ds-dark-theme] .dshr-stack-box {
 /* ---- Matplotlib cell ---- */
 .dshr-mpl {
   padding: 10px 12px;
-}
-
-.dshr-mpl-tabs {
-  display: flex;
-  justify-content: flex-end;
-  gap: 4px;
-  margin-bottom: 8px;
-}
-
-.dshr-mpl-tab {
-  border: 1px solid var(--dsw-alias-border-l1);
-  background: var(--dsw-alias-bg-base);
-  color: var(--dsw-alias-label-secondary);
-  border-radius: 6px;
-  padding: 2px 10px;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.dshr-mpl-tab:disabled {
-  cursor: default;
-  opacity: 0.4;
-}
-
-/* Export is an action beside the view tabs, not a fourth view. */
-.dshr-mpl-tab-action {
-  margin-left: 4px;
-  color: var(--dsw-alias-link);
-}
-
-.dshr-mpl-tab.active {
-  color: var(--dsw-alias-label-primary);
-  border-color: var(--dsw-alias-label-primary);
 }
 
 .dshr-mpl-chart {

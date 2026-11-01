@@ -44,10 +44,11 @@ export interface RichChrome {
   readonly mplRunning: string
   readonly mplFailed: string
   readonly mplDownloadPng: string
-  /** Image-card copy action and degradation copy. */
-  readonly imageCopy: string
-  readonly imageCopied: string
-  readonly imageCopyFailed: string
+  /** Clipboard action labels shared by the image card and the chart toolbars. */
+  readonly copy: string
+  readonly copied: string
+  readonly copyFailed: string
+  /** Image-card degradation copy. */
   readonly imagePreviewFailed: string
   /** Alert titles keyed by GitHub alert flavor. */
   readonly calloutTitles: Readonly<Record<CalloutType, string>>

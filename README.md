@@ -9,7 +9,7 @@
 | 项 | 值 |
 |---|---|
 | 包名 | `dsh-rich-render` |
-| 版本 | `0.9.18`（`private`，不发布） |
+| 版本 | `0.9.19`（`private`，不发布） |
 | 类型 | host + client bundle（`dsh.client.platform: web`，自带 `dsh.bundle.patch`） |
 | 宿主半区入口 | `lib/index.js`（由 `index.mjs` 构建；预构建产物随仓库提交） |
 | 浏览器半区入口 | `lib/client.js`（CJS factory，预构建产物随仓库提交） |
@@ -37,7 +37,7 @@
 | 输入 | 升格 |
 |---|---|
 | H2/H3 + 紧跟有序列表（≥2 项、项首句 ≤30 字） | 卡片组（标题 + 说明，无图标位——入口图标系统 v0.8.0 退役） |
-| 表格 | 样式化表格 + 图表切换（可图时默认图表，三栏：图表/表格/下载图片） |
+| 表格 | 样式化表格 + 图表切换（可图时默认图表；右上角图标工具条：表格 / 图表 / 复制 / 下载 PNG） |
 | GFM 任务列表（`- [ ]` / `- [x]`，无序或有序，≥2 项且每项都是任务项） | 清单卡片：标题右侧实时 `x/y 项完成` + 进度条；点复选框即时改状态；紧邻上一块（任意级别标题、普通段落或独立列表）去掉标记后作标题，无上一块时用「检查清单」 |
 | 引用块 | callout；首行单独写 GitHub 标注标记（`> [!NOTE]` / `[!TIP]` / `[!IMPORTANT]` / `[!WARNING]` / `[!CAUTION]`，大小写不敏感）则渲染分型提示框：GitHub 配色 + 图标 + 本地化标题（注意/提示/重要/警告/危险），标记行不进正文 |
 | 水印 | 右下角齿轮进设置：图片（URL/本地文件转 dataURL）、透明度（默认 0.12）、四角、大小；存 localStorage |
@@ -55,7 +55,7 @@
 - 混合列表、单项、嵌套任务列表不升格（保持原生）；任务列表不会被卡片/时间线/思维导图规则抢走，显式任务语法优先。注意 markdown 语义：同一种列表符号、只隔一个空行的两个列表会合并成一个 loose list，因此不会被当成“独立的前置列表”；不同类型（有序/无序）或不同符号才会解析成两个列表。
 - 标题与说明里的 `$...$` 继续走平台 MarkdownText 排版，其余文字保持字面量。
 
-表格→图表决策树（行数 2~30 才可图；可图时默认显示图表，tab 为 图表/表格/下载图片；下载把当前图表以 2x PNG 导出，计算样式内联、背景取页面不透明底色，并绘制图例——饼图右侧带数值与百分比，柱/线下方为序列名，柱状序列附总和）：
+表格→图表决策树（行数 2~30 才可图；可图时默认显示图表，右上角是图标工具条（表格 / 图表 / 复制 / 下载）；下载把当前图表以 2x PNG 导出，复制写同一张 PNG 到剪贴板，计算样式内联、背景取页面不透明底色，并绘制图例——饼图右侧带数值与百分比，柱/线下方为序列名，柱状序列附总和）：
 
 - 列数 >2：第 2..N 列全数值？第 1 列数值 ⇒ 折线；第 1 列文字 ⇒ 分组柱状；否则表格
 - 列数 =2：第 2 列全数值？第 1 列数值 ⇒ 折线；第 1 列文字且总和 ≤1 ⇒ 饼图（**总和 <1 自动补一片「其他」凑满整圆**，弱化样式）；总和 >1 ⇒ 柱状；第 2 列非数值 ⇒ 表格
@@ -112,7 +112,7 @@ v2 已上线：行数 2~550（实现容差）、纯数字正则（含科学计�
   4. 其余、空值、解析失败 → 表格，静默回退，不提示原因。
 - **v1 的“>2 列且首列文字 → 分组柱状”取消**；这种情况直接回表格。
 - 浮点：用缩放整数/Decimal 精确求和；`|sum-1| ≤ 1e-9` 视为 1；百分比展示用最大余数法凑满 100%，Other 同样处理。
-- 不设 Y 列数、类别数、重复标签上限；三栏 tab 可切回表格。现有 README v1 写作「图表/表格/下载图片」，讨论中表述为「表格/图表/下载」；实现时以现有 UI 为准并对齐。
+- 不设 Y 列数、类别数、重复标签上限；图标工具条可切回表格。现有 README v1 写作「图表/表格/下载图片」，讨论中表述为「表格/图表/下载」；实现时以现有 UI 为准并对齐。
 - 性能护栏：>550 数据行跳过图表（不是图表规则，是渲染保护）。
 - 可图时默认图表页；表格始终可切回（沿用现有设计）。
 
@@ -121,7 +121,7 @@ v2 已上线：行数 2~550（实现容差）、纯数字正则（含科学计�
 - 仅支持 `matplotlib` 围栏，不支持 seaborn；persona 仅在检测到 Python + matplotlib + numpy 时注入，并注入三者版本。
 - 必须内嵌数据；不读工作区文件、不联网；不要假设 pandas/seaborn；一个 cell 一张图。
 - 首次渲染自动执行；缓存 key = 代码 + backend + 主题 + 库版本 + 字体 + DPI；失败结果也缓存，**不设手动重试按钮**；超时/失败显示代码与错误，不重复自动执行。
-- UI：三栏 tab `代码 / 图表 / 下载`；成功默认图表页，失败默认代码页；功能关闭或环境缺失时退化为普通 Python 代码块。
+- UI：右上角图标工具条 `代码 / 图表` + `复制 / 下载`；成功默认图表页，失败默认代码页；功能关闭或环境缺失时退化为普通 Python 代码块。
 - 复杂图、交互图、artifacts、Plotly、kernel、文件交付提示都不在 rich-render 范围；这里是终点。
 
 ### persona
@@ -282,6 +282,9 @@ spec 设想独立 channel `/rich-render`。实际：自定义 channel 的 `rpc.h
 
 persona.md 措辞修订（用户编辑，无代码改动，测试 108/108 仍绿）：富渲染总则改为「解释论证默认连贯段落」，收紧原生无序列表与有序列表的使用条件；stack 用途扩展为「同一阶段内多个方向或方案的分组说明」并写明与多级列表的取舍（回应上面"stack 未被自发使用"观察项）；「选择」节从条目列表改为连贯段落。persona 为运行时资产，宿主启动时一次性读入。desktop profile 已 remove+add 刷新至 0.2.1（运行中的桌面端重启后生效）；web profile 仍装 0.2.0（persona 为旧版），需要时同法刷新。
 
+## 修订记录（2026-11-01，v0.9.19）
+
+图标集到了（`L:\works\news\icons-minimal-svg`，Lucide/Feather 两套原始 SVG，推荐 Lucide）。工具条一次做完：新增 `FenceToolbar`（`.dshr-toolbar`），两个图表单元共用——左半是视图 tab（表格/图表、代码/图表），中间一条 `border-l2` 竖发丝线，右半是动作（复制、下载），整条 `justify-content: flex-end` 靠右；按钮 26×26、16px 图标、`--dsw-radius-sm` 圆角，hover/激活都是 `interactive-bg-hover` 底 + 主色图标，`:focus-visible` 2px `link` 描边，全部 `Tooltip`（`side=bottom`、`portal`）+ `aria-label`，界面上不再出现按钮文字。图标路径内联进插件自己的 Lucide 集合（`src/rules/icons.ts` 新增 table / chart / download / copy，`code` 原本就有；表格与复制里的圆角 `rect` 改写成等价 path，保持 `IconPaths` 只有 path 的形状）。复制：`chart-download.ts` 拆出 `chartPngBlob`（原 `downloadChartPng` 的光栅化部分），新增 `copyChartPng` 写 `ClipboardItem` 到剪贴板；matplotlib 侧直接把 dataURL 取 blob 写入。`FenceToolbar` 自己管复制反馈（成功换 check、失败换 alert-triangle 并染 `state-error-primary`，1.5s 后回到 idle，卸载时清定时器）；图表未就绪时复制与下载按钮 `disabled`。文案收敛：新增 locale `copyFailed`，图片卡与图表工具条共用 `copy`/`copied`/`copyFailed`，删掉重复的 `imageCopy`/`imageCopied`/`imageCopyFailed`。`build.test.mjs` 的表格工具条断言改成「四个 `dshr-toolbar-btn`，`aria-label` 依次 viewTable/viewChart/copy/downloadChart，图表默认激活，复制与导出都接上 onClick」，图片卡断言里的 label 改为 `copy`。160 项测试全绿。两 profile 已刷，桌面端重启生效。
 ## 修订记录（2026-11-01，v0.9.18）
 
 用户提出 matplotlib 单元与「表格→图表」单元的工具条应当一致：1) matplotlib 的 tab 原来靠左、表格单元靠右，现统一靠右（`.dshr-mpl-tabs` 加 `justify-content: flex-end`）；2) matplotlib 的「下载」原本是第三个 tab、点开后才给一个 `<a download>` 链接，现改成与表格单元同样的即时动作——`dshr-mpl-tab-action` 按钮直接把 dataURL 触发下载并停在当前页，图片未就绪时按钮 `disabled`；下载页与 `.dshr-mpl-dl` 样式一并删掉。第 3、4 点（复制按钮、五个图标）暂缓：平台图标集里只有 code / download / copy 三个现成 glyph，table / chart 没有对得上的，等用户给图或另选图标集后再一次性替换成图标工具条。

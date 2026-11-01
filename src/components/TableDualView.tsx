@@ -8,7 +8,8 @@ import { useRef, useState } from 'react'
 import type { MarkdownLabels } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ChartLabels } from './charts.tsx'
 import { ChartView } from './charts.tsx'
-import { downloadChartPng } from './chart-download.ts'
+import { downloadChartPng, copyChartPng } from './chart-download.ts'
+import { FenceToolbar } from './FenceToolbar.tsx'
 import { InlineMarkdown } from './InlineMarkdown.tsx'
 import type { TableSegment } from '../rules/segments.ts'
 import type { CSSProperties } from 'react'
@@ -60,13 +61,20 @@ function Grid({ segment, labels }: { segment: TableSegment; labels: MarkdownLabe
 
 export interface TableDualViewProps {
   readonly segment: TableSegment
-  /** Toggle, export, and supplement-slice copy. */
-  readonly chartLabels: ChartLabels & { table: string; chart: string; downloadChart: string }
+  /** Toggle, export, copy, and supplement-slice copy. */
+  readonly chartLabels: ChartLabels & {
+    table: string
+    chart: string
+    downloadChart: string
+    copy: string
+    copied: string
+    copyFailed: string
+  }
   /** Platform markdown chrome for header and cell content. */
   readonly labels: MarkdownLabels
 }
 
-/** Chart-first dual view with a table fallback and PNG export. */
+/** Chart-first dual view with a table fallback, PNG export, and clipboard copy. */
 export function TableDualView({ segment, chartLabels, labels }: TableDualViewProps) {
   const [view, setView] = useState<'chart' | 'table'>(segment.chart === undefined ? 'table' : 'chart')
   const chartHost = useRef<HTMLDivElement | null>(null)
@@ -74,31 +82,18 @@ export function TableDualView({ segment, chartLabels, labels }: TableDualViewPro
   if (chart === undefined) return <Grid segment={segment} labels={labels} />
   return (
     <div className="dshr-dual" data-view={view}>
-      <div className="dshr-dual-bar" role="group">
-        <button
-          type="button"
-          className="dshr-dual-tab"
-          data-active={view === 'chart' || undefined}
-          onClick={() => { setView('chart') }}
-        >
-          {chartLabels.chart}
-        </button>
-        <button
-          type="button"
-          className="dshr-dual-tab"
-          data-active={view === 'table' || undefined}
-          onClick={() => { setView('table') }}
-        >
-          {chartLabels.table}
-        </button>
-        <button
-          type="button"
-          className="dshr-dual-tab dshr-dual-tab-action"
-          onClick={() => { void downloadChartPng(chartHost.current, chart, chartLabels) }}
-        >
-          {chartLabels.downloadChart}
-        </button>
-      </div>
+      <FenceToolbar
+        tabs={[
+          { id: 'table', label: chartLabels.table, icon: 'table' },
+          { id: 'chart', label: chartLabels.chart, icon: 'chart' },
+        ]}
+        active={view}
+        onSelect={(id) => { setView(id === 'chart' ? 'chart' : 'table') }}
+        onCopy={() => copyChartPng(chartHost.current, chart, chartLabels)}
+        copyLabels={{ copy: chartLabels.copy, copied: chartLabels.copied, failed: chartLabels.copyFailed }}
+        onDownload={() => { void downloadChartPng(chartHost.current, chart, chartLabels) }}
+        downloadLabel={chartLabels.downloadChart}
+      />
       <div className="dshr-dual-pane" data-active={view === 'chart' || undefined} ref={chartHost}>
         <ChartView chart={chart} labels={chartLabels} />
       </div>

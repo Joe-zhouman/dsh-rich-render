@@ -11,6 +11,7 @@ import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { MarkdownLabels } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { MatplotlibSegment } from '../rules/segments.ts'
 import { matplotlibExec, matplotlibStatus, type MatplotlibRunResult } from '../matplotlib-bridge.ts'
+import { FenceToolbar } from './FenceToolbar.tsx'
 import type { RichChrome } from './RichMarkdownText.tsx'
 
 type Phase = 'probe' | 'off' | 'running' | 'done' | 'failed'
@@ -59,13 +60,32 @@ export function MatplotlibView({ segment, labels, chrome }: MatplotlibViewProps)
     anchor.download = 'matplotlib.png'
     anchor.click()
   }
+  const copy = async (): Promise<boolean> => {
+    if (image === undefined) return false
+    try {
+      const blob = await (await fetch(image)).blob()
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+      return true
+    } catch {
+      // A host that refuses image writes reads as a failed copy.
+      return false
+    }
+  }
   return (
     <div className="dshr-mpl dshr-fence">
-      <div className="dshr-mpl-tabs" role="tablist">
-        <button type="button" role="tab" aria-selected={tab === 'code'} className={tab === 'code' ? 'dshr-mpl-tab active' : 'dshr-mpl-tab'} onClick={() => setTab('code')}>{chrome.mplCode}</button>
-        <button type="button" role="tab" aria-selected={tab === 'chart'} className={tab === 'chart' ? 'dshr-mpl-tab active' : 'dshr-mpl-tab'} onClick={() => setTab('chart')}>{chrome.mplChart}</button>
-        <button type="button" className="dshr-mpl-tab dshr-mpl-tab-action" disabled={image === undefined} onClick={download}>{chrome.mplDownload}</button>
-      </div>
+      <FenceToolbar
+        tabs={[
+          { id: 'code', label: chrome.mplCode, icon: 'code' },
+          { id: 'chart', label: chrome.mplChart, icon: 'chart' },
+        ]}
+        active={tab}
+        onSelect={(id) => { setTab(id === 'chart' ? 'chart' : 'code') }}
+        onCopy={copy}
+        copyLabels={{ copy: chrome.copy, copied: chrome.copied, failed: chrome.copyFailed }}
+        onDownload={download}
+        downloadLabel={chrome.mplDownloadPng}
+        disabled={image === undefined}
+      />
       {tab === 'code' && <MarkdownText text={segment.source} labels={labels} />}
       {tab === 'chart' && (
         phase === 'running' || phase === 'done'
