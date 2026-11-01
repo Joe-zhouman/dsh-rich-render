@@ -177,8 +177,13 @@ test('the client artifact loads through the module table and replaces the assist
 
   assert.equal(themeCalls.length, 1)
   assert.equal(themeCalls[0][0], 'dsh-rich-render:font')
-  assert.match(themeCalls[0][1]['--dsw-font-family'].light, /Noto Sans SC/u)
-  assert.equal(themeCalls[0][1]['--dsw-font-family'].light, themeCalls[0][1]['--dsw-font-family'].dark)
+  const fonts = themeCalls[0][1]
+  assert.match(fonts['--dsw-font-family'].light, /^'Segoe UI', ui-sans-serif/u)
+  assert.match(fonts['--dsw-font-family'].light, /'Microsoft YaHei'/u)
+  assert.match(fonts['--dsw-font-family-brand'].light, /^'Segoe UI'/u)
+  assert.equal(fonts['--dsw-font-family'].light, fonts['--dsw-font-family'].dark)
+  assert.match(fonts['--ds-font-family-code'].light, /^'Fira Code'/u)
+  assert.equal(fonts['--ds-font-family-code'].light, fonts['--ds-font-family-code'].dark)
   assert.deepEqual(localeNames, ['richRender'])
   assert.deepEqual(declared, ['conversation.chat.node', 'shell.overlay'])
   assert.equal(registrations.length, 2)

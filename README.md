@@ -9,7 +9,7 @@
 | 项 | 值 |
 |---|---|
 | 包名 | `dsh-rich-render` |
-| 版本 | `0.9.11`（`private`，不发布） |
+| 版本 | `0.9.12`（`private`，不发布） |
 | 类型 | host + client bundle（`dsh.client.platform: web`，自带 `dsh.bundle.patch`） |
 | 宿主半区入口 | `lib/index.js`（由 `index.mjs` 构建；预构建产物随仓库提交） |
 | 浏览器半区入口 | `lib/client.js`（CJS factory，预构建产物随仓库提交） |
@@ -27,6 +27,8 @@
 ## 它做什么
 
 接管助手消息渲染（keyed 槽 `conversation.chat.node` / `assistant-step`），对 settle 后的 markdown 做纯规则升格；流式期间与未命中内容走平台原生 `MarkdownText`。另加 `shell.overlay` 水印层。
+
+同时通过 `ctx.theme.overrideTokens('dsh-rich-render:font', …)` 覆盖三个字体 token（插件启用期间全局生效，禁用即恢复平台默认）：`--dsw-font-family` / `--dsw-font-family-brand` 用系统 UI 字体栈（Windows 命中 Segoe UI + 微软雅黑，macOS 命中系统 sans + 苹方），`--ds-font-family-code` 用 Fira Code 打头、后面接平台等宽与中文字体（Fira Code 没有中文字形，代码里的中文由「微软雅黑 UI」承接）。
 
 升格组件里的模型原文（阶段/卡片标题、表头与单元格、思维导图节点标签）会把其中的 `$...$`、`$$...$$`、`\(...\)`、`\[...\]` 公式段交给平台 `MarkdownText` 排版，其余文字保持字面量；标题开头的 `2. ` 因此不会被误解析成有序列表。
 
@@ -280,6 +282,10 @@ spec 设想独立 channel `/rich-render`。实际：自定义 channel 的 `rpc.h
 
 persona.md 措辞修订（用户编辑，无代码改动，测试 108/108 仍绿）：富渲染总则改为「解释论证默认连贯段落」，收紧原生无序列表与有序列表的使用条件；stack 用途扩展为「同一阶段内多个方向或方案的分组说明」并写明与多级列表的取舍（回应上面"stack 未被自发使用"观察项）；「选择」节从条目列表改为连贯段落。persona 为运行时资产，宿主启动时一次性读入。desktop profile 已 remove+add 刷新至 0.2.1（运行中的桌面端重启后生效）；web profile 仍装 0.2.0（persona 为旧版），需要时同法刷新。
 
+## 修订记录（2026-11-01，v0.9.12）
+
+用户给了一份字体栈参考，要求照它改富渲染的字体设置：界面用系统字体栈，代码用 **Fira Code**（他本人的偏好）。`--dsw-font-family` / `--dsw-font-family-brand` 从 v0.9.7 的「Noto Sans SC 打头」换成 `'Segoe UI', ui-sans-serif, system-ui, -apple-system, Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif`；`--ds-font-family-code` 首次纳入覆盖层：`'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', 'Microsoft YaHei UI', 'PingFang SC', 'Noto Sans CJK SC'`。两处都把 Segoe UI 放在 `ui-sans-serif` 之前：本机 Chromium 在 `lang=zh-CN` 的文档里把 `ui-sans-serif` 解析成 Microsoft YaHei UI，Latin 也一起变成雅黑，前置 Segoe UI 才能得到参考里「Segoe UI + 中文雅黑」的观感（CDP `CSS.getPlatformFontsForNode` 实测：UI Latin=Segoe UI、UI 中文=Microsoft YaHei UI、代码=Fira Code、代码内中文=Microsoft YaHei UI）。等宽栈不加裸 `monospace` 尾巴，与平台 `--ds-font-family-code` 保持一致，避免 Windows 中文回退到宋体；Fira Code 没有中文字形，代码里的中文由栈内的「微软雅黑 UI」承接。Fira Code 的 `calt` 连字随字体默认生效（`!=`、`=>` 会连写）。本机已装 Fira Code（Regular/Retina/Bold 等），未装的机器自动落到后面的等宽字体。`build.test.mjs` 的字体断言改为校验两条栈及 light/dark 同值。160 项测试全绿。两 profile 已刷，桌面端重启生效。
+
 ## 修订记录（2026-11-01，v0.9.11）
 
 用户纠正 v0.9.10 的方向：布局和交互都不该动（竖排单选项、展示面板、选中加粗都保持原样），丑的只是那个自绘圆点——「中间的点太大，看上去又不在中间」，做法应当是照成熟实现重画这个小控件。于是恢复 v0.9.9 的选择区 DOM 与样式，只把指示器换成**原生 `<input type="radio">`**：`label` 行里一个 16px 单选，`accent-color: var(--dsw-alias-brand-primary)`，`:focus-visible` 2px `link` 描边——与平台 `Checkbox`（`ui-primitives/Checkbox.module.css`）和插件管理页的 registry 选择（`PluginManagerPage.module.css`）同一套写法，圆环、圆点、焦点框全部由浏览器绘制，因此圆点必然居中，不再有旧实现 1.5px 边框 + `inset: 2.5px` 在 1x 下的亚像素偏移。同一 `name`（`useId()` 生成，每个围栏一组）让方向键切换与组语义原生可用。删掉 `dshr-choices-dot` 圆环与 `::after` 圆点，以及 `dshr-choices-list` 的 `role=radiogroup`、按钮上的 `role=radio`/`aria-checked`（原生控件自带）。`build.test.mjs` 的选项断言改为「每项是 `type=radio` 的原生 input、同组同名」，`stubReact` 补 `useId`。160 项测试全绿。两 profile 已刷，桌面端重启生效。
@@ -298,7 +304,7 @@ persona.md 措辞修订（用户编辑，无代码改动，测试 108/108 仍绿
 
 ## 修订记录（2026-10-27，v0.9.7）
 
-用户偏好 Google Noto Sans CJK（手机同款）：client 半边通过 `ctx.theme.overrideTokens('dsh-rich-render:font', ...)` 把 `--dsw-font-family` 与 `--dsw-font-family-brand` 覆盖为 `'Noto Sans SC', 'Noto Sans CJK SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif`（light/dark 同值）；只改 UI 正文字体，`--ds-font-family-code` 不动。本机已装有 Noto Sans SC（Regular/Medium/Bold）与 Noto Sans CJK SC，无需下载或安装。字体随富渲染插件启用/停用；禁用插件即回系统字体。build.test 的 client stub 补 `theme` 并断言覆盖层。138 项测试仍绿。两 profile 已刷，桌面端重启生效。
+用户偏好 Google Noto Sans CJK（手机同款）：client 半边通过 `ctx.theme.overrideTokens('dsh-rich-render:font', ...)` 把 `--dsw-font-family` 与 `--dsw-font-family-brand` 覆盖为 `'Noto Sans SC', 'Noto Sans CJK SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif`（light/dark 同值）；只改 UI 正文字体，`--ds-font-family-code` 不动。本机已装有 Noto Sans SC（Regular/Medium/Bold）与 Noto Sans CJK SC，无需下载或安装。字体随富渲染插件启用/停用；禁用插件即回系统字体。build.test 的 client stub 补 `theme` 并断言覆盖层。138 项测试仍绿。两 profile 已刷，桌面端重启生效。（0.9.12 已改为系统 UI 字体栈 + Fira Code，见上。）
 
 ## 修订记录（2026-10-27，v0.9.6）
 
