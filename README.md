@@ -4,6 +4,8 @@
 
 本目录是 `dsh-rich-render` 的源码仓库（git，`main` 分支，初始提交 v0.9.1，2026-10-26）。
 
+安装到别人的部署、验证是否生效、卸载与常见问题：[INSTALL.md](INSTALL.md)。本文件是开发与规则手册，装机细节不再重复。
+
 | 项 | 值 |
 |---|---|
 | 包名 | `dsh-rich-render` |
@@ -64,7 +66,7 @@ pnpm run build      # tsdown 双 pass：lib/index.js（host 空 apply）+ lib/cl
 pnpm test           # node --test + 类型剥离：138 项（规则/清单/图表决策/golden set/水印配置/构建产物）
 ```
 
-装机（web/desktop 两 profile 均已装）：profile `package.json` 的 dependencies 写 `dsh-rich-render: file:L:/dsh/.local-deploy/rich-render-plugin`，`dsh.profile.bundles` 追加 `dsh-rich-render`，profile 目录直跑 `pnpm install`（desktop 拒 `dsh plugin add` CLI）。
+装机见 [INSTALL.md](INSTALL.md)：桌面端应用内安装、web 的 `dsh plugin add`、file: 依赖、matplotlib 配置、验证与卸载都在那里。本机 web/desktop 两个 profile 已用 file: 依赖装好。
 
 **改版刷新**：file: 依赖按 spec 判等，改完必须 `pnpm remove dsh-rich-render && pnpm add dsh-rich-render@file:L:/dsh/.local-deploy/rich-render-plugin`，再重启 web/桌面端。
 
