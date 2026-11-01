@@ -538,7 +538,7 @@ test('prototype choices render radio options and a live showcase', () => {
   const tree = renderStub(element)
   const options = collectStub(tree, node =>
     typeof node.type === 'string' && String(node.props?.className ?? '').includes('dshr-choices-option'))
-  assert.deepEqual(options.map(node => node.props.children[1]?.props?.children), ['方案一', '方案二'])
+  assert.deepEqual(options.map(node => node.props.children), ['方案一', '方案二'])
   assert.equal(options.filter(node => node.props['data-active'] !== undefined).length, 1)
   // The selected showcase renders its inner stack fence as a real component.
   assert.ok(collectStub(tree, node =>

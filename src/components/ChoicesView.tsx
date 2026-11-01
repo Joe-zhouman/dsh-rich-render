@@ -1,6 +1,6 @@
 /**
- * Prototype choices: the explicit `prototype-choices` fence as a vertical
- * radio option list over a showcase panel. The selected option's body
+ * Prototype choices: the explicit `prototype-choices` fence as a row of
+ * selectable chips over a live showcase panel. The selected option's body
  * renders through the full upgrade pipeline, so a prototype can be a live
  * rich fence, a code block, or plain prose. Selection is component-local
  * state (first option by default) and never writes back to the session.
@@ -23,7 +23,7 @@ export interface ChoicesViewProps {
   readonly chrome: RichChrome
 }
 
-/** Draw the radio option list and the selected option's showcase panel. */
+/** Draw the selectable chip row and the selected option's showcase panel. */
 export function ChoicesView({ segment, labels, mentions, chrome }: ChoicesViewProps) {
   const [active, setActive] = useState(0)
   const index = Math.min(active, segment.choices.length - 1)
@@ -44,8 +44,7 @@ export function ChoicesView({ segment, labels, mentions, chrome }: ChoicesViewPr
             data-active={choiceIndex === index || undefined}
             onClick={() => { setActive(choiceIndex) }}
           >
-            <span className="dshr-choices-dot" aria-hidden />
-            <span className="dshr-choices-label">{choice.label}</span>
+            {choice.label}
           </button>
         ))}
       </div>

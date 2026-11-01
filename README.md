@@ -9,7 +9,7 @@
 | 项 | 值 |
 |---|---|
 | 包名 | `dsh-rich-render` |
-| 版本 | `0.9.9`（`private`，不发布） |
+| 版本 | `0.9.10`（`private`，不发布） |
 | 类型 | host + client bundle（`dsh.client.platform: web`，自带 `dsh.bundle.patch`） |
 | 宿主半区入口 | `lib/index.js`（由 `index.mjs` 构建；预构建产物随仓库提交） |
 | 浏览器半区入口 | `lib/client.js`（CJS factory，预构建产物随仓库提交） |
@@ -213,7 +213,7 @@ v2 已上线：行数 2~550（实现容差）、纯数字正则（含科学计�
 ### prototype-choices（方案示意，2026-10-26）
 
 - 围栏 `prototype-choices`，不提供别名；语法 = tab 文法（非缩进 `@选项名` 行开选项，```/~~~ 内层围栏里的 `@` 视为内容；2–30 项、标签纯文本 ≤60 字）+ 可选标题块（首个 `@` 之前恰好一个标题/段落，去尾冒号、≤120 字，多块或代码块整体回退）。
-- 视图分两区：选择区为竖排单选项（`role=radiogroup/radio`，选中态 = 主色圆点 + 加粗，hover 有底）；展示区为描边圆角面板。选中项内容走**完整升格管线**（`ChoicesView` 嵌 `RichMarkdownText`）——示意可以是真实渲染的富围栏、代码块或纯文字；仅渲染选中项；选中态组件本地（默认第一项），不写回会话。
+- 视图分两区：选择区为一排可换行的 chip（`role=radiogroup/radio`，未选中 `interactive-bg-hover` 灰底 + `label-secondary`，选中 `label-primary` 实底 + `label-primary-inverted` 文字 + 500 字重，hover 加深并提亮文字，`:focus-visible` 2px `link` 描边）；chip 按内容宽度排布、放不下自动换行，超长标签在 chip 内折行。展示区不再套第二层描边面板（外框由 `.dshr-fence` 提供），与选择区隔 10px。选中项内容走**完整升格管线**（`ChoicesView` 嵌 `RichMarkdownText`）——示意可以是真实渲染的富围栏、代码块或纯文字；仅渲染选中项；选中态组件本地（默认第一项），不写回会话。
 - 与 tab 的分工：tab 是内容分组页（正文级紧凑排版），prototype-choices 是方案对比示意（选项 + 直观预览）。
 
 ## persona 注入（2026-10-24 已实现并实机验收）
@@ -279,6 +279,10 @@ spec 设想独立 channel `/rich-render`。实际：自定义 channel 的 `rpc.h
 ## 修订记录（2026-10-25，v0.2.1）
 
 persona.md 措辞修订（用户编辑，无代码改动，测试 108/108 仍绿）：富渲染总则改为「解释论证默认连贯段落」，收紧原生无序列表与有序列表的使用条件；stack 用途扩展为「同一阶段内多个方向或方案的分组说明」并写明与多级列表的取舍（回应上面"stack 未被自发使用"观察项）；「选择」节从条目列表改为连贯段落。persona 为运行时资产，宿主启动时一次性读入。desktop profile 已 remove+add 刷新至 0.2.1（运行中的桌面端重启后生效）；web profile 仍装 0.2.0（persona 为旧版），需要时同法刷新。
+
+## 修订记录（2026-11-01，v0.9.10）
+
+用户反馈 prototype-choices 的「checkbox」太丑（截图：粗描边圆环 + 实心黑点，竖排三行像表单）。选择区改成**一排可换行的 chip**：删掉 `dshr-choices-dot` 圆点标记与竖排列表，选中态只由 chip 自身的填充表达——未选中 `interactive-bg-hover` 灰底 + `label-secondary` 13px，选中 `label-primary` 实底 + `label-primary-inverted` 反色 + 500 字重；hover 用 `interactive-bg-hover-accent` 加深并提亮文字，`:focus-visible` 用 2px `link` 描边，背景/文字过渡 120ms（`prefers-reduced-motion` 关掉）。`flex-wrap` + `flex: 0 1 auto` + `max-width: 100%` 让 2–30 个选项按内容宽度排布、放不下就换行，超长标签在 chip 内折行不溢出。展示区去掉原先套在 `.dshr-choices-panel` 上的 1px 边框、圆角与内边距——外框已由共享 `.dshr-fence` 提供，两层描边去掉后画面只剩一个外框；标题/选择区/展示区统一由 `.dshr-choices` 的 10px `gap` 分隔。暗色不另写样式，全部跟随 `--dsw-alias-*`（选中 chip 自动变成浅底深字）。`build.test.mjs` 的选项标签断言随 DOM 调整（chip 文本是按钮直接子节点，不再包在第二个 span 里）。160 项测试全绿。两 profile 已刷，桌面端重启生效。
 
 ## 修订记录（2026-11-01，v0.9.9）
 
