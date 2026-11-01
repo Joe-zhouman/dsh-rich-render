@@ -205,4 +205,5 @@ export interface MatplotlibSegment extends SegmentSource {
  * @param text - complete markdown source of one text block.
  * @returns consecutive segments; native fallback covers the whole text.
  */
+export { rewritePathImages } from './path-images.ts'
 export { upgradeText } from './upgrade.ts'

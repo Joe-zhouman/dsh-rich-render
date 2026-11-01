@@ -15,7 +15,7 @@ import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { MarkdownLabels } from '@deepseek-ai/dsh-client-ui-primitives'
 import { pathImages } from '../markdown-fallback.ts'
 import type { Mentions } from '../markdown-fallback.ts'
-import { upgradeText } from '../rules/segments.ts'
+import { rewritePathImages, upgradeText } from '../rules/segments.ts'
 import type { CalloutType, UpgradeSegment } from '../rules/segments.ts'
 import { CalloutView } from './CalloutView.tsx'
 import { CardsView } from './CardsView.tsx'
@@ -116,9 +116,14 @@ export const RichMarkdownText = memo(function RichMarkdownText({ text, streaming
   }
   let segments: UpgradeSegment[]
   try {
-    segments = upgradeText(text)
+    // Native runs get the local-path image fallback (bare and code-wrapped
+    // paths become standard images); each segment's `source` keeps the
+    // authored text so a boundary fallback shows the original display.
+    segments = upgradeText(text).map(segment => segment.kind === 'native'
+      ? { ...segment, text: rewritePathImages(segment.text) }
+      : segment)
   } catch {
-    return <MarkdownText text={text} labels={labels} fileMentions={mentions} pathImages={pathImages} />
+    return <MarkdownText text={rewritePathImages(text)} labels={labels} fileMentions={mentions} pathImages={pathImages} />
   }
   if (segments.length === 1 && segments[0]?.kind === 'native') {
     return <MarkdownText text={segments[0].text} labels={labels} fileMentions={mentions} pathImages={pathImages} />

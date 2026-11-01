@@ -9,7 +9,7 @@
 | 项 | 值 |
 |---|---|
 | 包名 | `dsh-rich-render` |
-| 版本 | `0.9.7`（`private`，不发布） |
+| 版本 | `0.9.8`（`private`，不发布） |
 | 类型 | host + client bundle（`dsh.client.platform: web`，自带 `dsh.bundle.patch`） |
 | 宿主半区入口 | `lib/index.js`（由 `index.mjs` 构建；预构建产物随仓库提交） |
 | 浏览器半区入口 | `lib/client.js`（CJS factory，预构建产物随仓库提交） |
@@ -42,6 +42,8 @@
 
 已退役的自动判定：多层级无序列表 → 思维导图（v0.2.0，改 `mindmap` 围栏）、阶段/Step/第X步/Phase 序列 → 时间线（v0.3.0，改 `timeline` 围栏）。相位标题有序列表不再让位时间线，随普通规则进卡片组。
 
+本地路径图片兜底（v0.9.8）：正文段落里的裸绝对路径（`L:\out\pic.png`、`/home/u/pic.png`）与反引号包裹的同样路径，在 settle 后重写为标准图片语法再交给平台渲染；文件不存在或路径不可解析时按 alt 文本回退，即原始路径字符串的纯文本显示。仅限图片扩展名（png/jpg/jpeg/gif/webp/bmp/svg/ico/avif）与绝对路径；链接内、图片语法内、代码围栏、表格、标题中的路径不动。
+
 清单（GFM 任务列表）的字段与交互：
 
 - 标题取清单紧邻的上一块，不限标题级别：任意 H1~H6、普通段落、独立列表都可以；普通段落压成一行并去掉行尾冒号，独立列表用「；」压成一行。清单不会平白出现，上一块就是它的引子，所以该块会被并进卡片、不再单独渲染。
@@ -63,7 +65,7 @@
 cd L:/dsh/.local-deploy/rich-render-plugin
 pnpm install        # 依赖：mdast 解析层 + react 类型（构建期）
 pnpm run build      # tsdown 双 pass：lib/index.js（host 空 apply）+ lib/client.js（CJS factory）
-pnpm test           # node --test + 类型剥离：138 项（规则/清单/图表决策/golden set/水印配置/构建产物）
+pnpm test           # node --test + 类型剥离：154 项（规则/清单/图表决策/路径图片兜底/golden set/水印配置/构建产物）
 ```
 
 装机见 [INSTALL.md](INSTALL.md)：桌面端应用内安装、web 的 `dsh plugin add`、file: 依赖、matplotlib 配置、验证与卸载都在那里。本机 web/desktop 两个 profile 已用 file: 依赖装好。
@@ -277,6 +279,10 @@ spec 设想独立 channel `/rich-render`。实际：自定义 channel 的 `rpc.h
 ## 修订记录（2026-10-25，v0.2.1）
 
 persona.md 措辞修订（用户编辑，无代码改动，测试 108/108 仍绿）：富渲染总则改为「解释论证默认连贯段落」，收紧原生无序列表与有序列表的使用条件；stack 用途扩展为「同一阶段内多个方向或方案的分组说明」并写明与多级列表的取舍（回应上面"stack 未被自发使用"观察项）；「选择」节从条目列表改为连贯段落。persona 为运行时资产，宿主启动时一次性读入。desktop profile 已 remove+add 刷新至 0.2.1（运行中的桌面端重启后生效）；web profile 仍装 0.2.0（persona 为旧版），需要时同法刷新。
+
+## 修订记录（2026-11-01，v0.9.8）
+
+用户需求：模型引用本地生图文件时不一定写标准 `![alt](path)`（persona 教过），常见写偏是**裸路径**与**反引号包裹的路径**两种形态，渲染层要兜底。新增 `src/rules/path-images.ts` 的 `rewritePathImages`：native 段落文本先经 mdast 解析，对每个 paragraph 的直接 text/inlineCode 子节点做匹配——inlineCode 整值是绝对路径 + 图片扩展名（png/jpg/jpeg/gif/webp/bmp/svg/ico/avif）即整节点重写；text 内用带前后断言的正则匹配裸路径（绝对路径、无空白、扩展名收尾，`x.pngx`/`y.png.tar`/URL/相对路径均不命中）；替换为 `![路径](<路径>)`（反斜杠双写防 CommonMark 消耗，尖括号 dest 容忍空格，alt 即原路径）。重写只发生在 native 段的 `text`，段 `source` 保持原文（错误边界回退仍显示原始形态）。落点复用平台两级回退：resolve 失败 → alt 纯文本；文件 404 → onError → alt 纯文本——"图片不存在 fallback 到原始显示"由平台既有行为直接给出。标题、表格、代码围栏、链接与图片语法内的路径不重写（避免二次包裹与语法破坏）；无图片后缀的文本经预检直接原样返回，零解析开销。接入 `RichMarkdownText` 的 upgradeText 后 map（含 catch 分支）。测试 138 → 154 项全绿（新增 `test/path-images.test.mjs` 16 项）。两 profile 已刷。
 
 ## 修订记录（2026-10-27，v0.9.7）
 
