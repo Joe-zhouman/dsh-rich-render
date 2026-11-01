@@ -21,8 +21,8 @@ const BRANCH_CLASSES = ['dshr-mm-b1', 'dshr-mm-b2', 'dshr-mm-b3', 'dshr-mm-b4'] 
 /** Connector span; must match `.dshr-mm-child`'s left padding and the edge width. */
 const EDGE_GAP = 40
 
-/** How far the stroke reaches into each node, so its round cap meets the glyph. */
-const EDGE_OVERLAP = 2
+/** How far each end of the stroke stops short of its node, clear of the pill and the first glyph. */
+const EDGE_INSET = 3
 
 /** Slack around the connector box so the stroke and its caps never clip. */
 const EDGE_PAD = 2
@@ -109,7 +109,7 @@ function useMindmapEdges(rootRef: RefObject<HTMLDivElement | null>, segment: Min
           const y1 = entry - top
           edge.style.top = `${top}px`
           edge.style.height = `${Math.abs(y1 - y0) + EDGE_PAD * 2}px`
-          path.setAttribute('d', `M${-EDGE_OVERLAP} ${y0} C${EDGE_GAP / 2} ${y0}, ${EDGE_GAP / 2} ${y1}, ${EDGE_GAP + EDGE_OVERLAP} ${y1}`)
+          path.setAttribute('d', `M${EDGE_INSET} ${y0} C${EDGE_GAP / 2} ${y0}, ${EDGE_GAP / 2} ${y1}, ${EDGE_GAP - EDGE_INSET} ${y1}`)
         }
       }
     }

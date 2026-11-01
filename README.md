@@ -9,7 +9,7 @@
 | 项 | 值 |
 |---|---|
 | 包名 | `dsh-rich-render` |
-| 版本 | `0.9.24`（`private`，不发布） |
+| 版本 | `0.9.25`（`private`，不发布） |
 | 类型 | host + client bundle（`dsh.client.platform: web`，自带 `dsh.bundle.patch`） |
 | 宿主半区入口 | `lib/index.js`（由 `index.mjs` 构建；预构建产物随仓库提交） |
 | 浏览器半区入口 | `lib/client.js`（CJS factory，预构建产物随仓库提交） |
@@ -163,7 +163,7 @@ v2 已上线：行数 2~550（实现容差）、纯数字正则（含科学计�
 
 
 - 横向 scrollbar + 缩放控件（`−` / `100%` / `+`，范围 50%~200%）；缩放是组件本地状态，不写回会话。
-- 视觉（v0.9.24，选型与参数出处见 `docs/mindmap-redesign-report.md`）：盒预算随深度递减——根是唯一实心胶囊（999px 圆角、`label-primary` 底 / `label-primary-inverted` 字、15px/600），一级与更深是裸文本（14px/500 主色、13px/400 次级色，max-width 240px），锚点是分支色下划线（底部渐变条：一级 2px、更深 1.5px，距文字底 3px，不切行内公式下伸，换行取整块宽）。分支色 4 色循环挂每个根的一级子树容器（`dshr-mm-b1..b4` 定义 `--dshr-mm-branch`，后代经 CSS 变量继承；根不参与循环；浅色 #3b82f6/#0d9488/#d97706/#7c3aed，`body[data-ds-dark-theme]` 下提亮为 #60a5fa/#2dd4bf/#fbbf24/#a78bfa，插件自带、不走 dsw token）。连线每边一条内联 SVG 三次贝塞尔（`M-2 y0 C20 y0, 20 y1, 42 y1`，从父节点出口即子列中线到子节点中心，两端向节点内伸 2px 让圆形端帽贴住字形；水平 gap 40px，根→一级 2px、更深 1.5px，颜色随子分支，dy=0 时退化为直线）；几何由组件在布局后测量，给每个 SVG 写 top/height、给 path 写 d（只用 offsetTop/offsetHeight 布局量，缩放 transform 不影响；ResizeObserver 在换行/行内公式改行高时重算；未测量前 path 无 d，不画半截线）。
+- 视觉（v0.9.25，选型与参数出处见 `docs/mindmap-redesign-report.md`）：盒预算随深度递减——根是唯一实心胶囊（999px 圆角、`label-primary` 底 / `label-primary-inverted` 字、15px/600），一级与更深是裸文本（14px/500 主色、13px/400 次级色，max-width 240px），锚点是分支色下划线（底部渐变条：一级 2px、更深 1.5px，距文字底 3px，不切行内公式下伸，换行取整块宽）。分支色 4 色循环挂每个根的一级子树容器（`dshr-mm-b1..b4` 定义 `--dshr-mm-branch`，后代经 CSS 变量继承；根不参与循环；浅色 #3b82f6/#0d9488/#d97706/#7c3aed，`body[data-ds-dark-theme]` 下提亮为 #60a5fa/#2dd4bf/#fbbf24/#a78bfa，插件自带、不走 dsw token）。连线每边一条内联 SVG 三次贝塞尔（`M3 y0 C20 y0, 20 y1, 37 y1`，从父节点出口即子列中线到子节点中心；两端各缩进 3px，圆形端帽再收 1px，所以线与胶囊、与首字之间留出约 2px 空隙，不重合；水平 gap 40px，根→一级 2px、更深 1.5px，颜色随子分支，dy=0 时退化为直线）；几何由组件在布局后测量，给每个 SVG 写 top/height、给 path 写 d（只用 offsetTop/offsetHeight 布局量，缩放 transform 不影响；ResizeObserver 在换行/行内公式改行高时重算；未测量前 path 无 d，不画半截线）。
 - 节点上限 200（总数）；不设最小条目数（至少根 + 1 子节点）。超限、解析失败或内容不是列表时，把围栏内容按普通 Markdown 渲染（列表就显示为 list），静默；插件未启用时仍是代码块。
 - 现有自动 mindmap 升格规则退役：普通嵌套 list 不再自动变 mindmap，只有显式 `mindmap` fence 才渲染。
 - 实现提示：复用 `MindmapView` 的布局；新增多根渲染、横向滚动、缩放；`upgrade.ts` 的 `matchMindmap` 及对应测试/golden 需同步调整。
@@ -283,6 +283,10 @@ spec 设想独立 channel `/rich-render`。实际：自定义 channel 的 `rpc.h
 ## 修订记录（2026-10-25，v0.2.1）
 
 persona.md 措辞修订（用户编辑，无代码改动，测试 108/108 仍绿）：富渲染总则改为「解释论证默认连贯段落」，收紧原生无序列表与有序列表的使用条件；stack 用途扩展为「同一阶段内多个方向或方案的分组说明」并写明与多级列表的取舍（回应上面"stack 未被自发使用"观察项）；「选择」节从条目列表改为连贯段落。persona 为运行时资产，宿主启动时一次性读入。desktop profile 已 remove+add 刷新至 0.2.1（运行中的桌面端重启后生效）；web profile 仍装 0.2.0（persona 为旧版），需要时同法刷新。
+
+## 修订记录（2026-11-02，v0.9.25）
+
+用户反馈 v0.9.24 的连线「和方框及文字部分重合了」，要求两边留一点距离。原因是 0.9.24 为了让圆端帽贴住字形，把路径两端各向节点内伸了 2px，叠加圆形端帽半径 1px，实际压进胶囊与首字 3px。改法：两端改为各缩进 3px（`M3 y0 C20 y0, 20 y1, 37 y1`），扣掉端帽半径后线端离节点约 2px，胶囊边缘与第一个字都不再被压到；曲线形状、线宽、gap、颜色、测量与重算逻辑一律不动。预览 `mm4.mjs` 的「改前」页固定读 `313a38d` 的样式表（原先读 `HEAD`，0.9.24 提交后 HEAD 已是 SVG 版，改前页会画不出线），`mm4-shot.mjs` 的几何校验增加两端 x 坐标（3 / 37）一项，13 条连线仍全部命中。测试 161 项全绿。两 profile 已刷（哈希与源一致），桌面端完全退出重开、web 刷新页面生效。
 
 ## 修订记录（2026-11-02，v0.9.24）
 

@@ -992,8 +992,9 @@ body[data-ds-dark-theme] .dshr-mm-b4 { --dshr-mm-branch: #a78bfa; }
 /* One connector per child: an inline SVG whose path is written after layout by
    the fit pass, from the parent exit (the children column's centerline) to the
    child's center. Each SVG box spans just the curve's vertical extent; overflow
-   stays visible so the stroke's round caps reach past the box edges into the
-   nodes. Before the fit runs the path carries no path data and paints nothing,
+   stays visible so neither the stroke nor its round caps are clipped. Both ends
+   stop short of their node, so the line never touches the root pill or the first
+   glyph. Before the fit runs the path carries no path data and paints nothing,
    so a missing measurement never shows a half-drawn line. */
 .dshr-mm-edge {
   position: absolute;
