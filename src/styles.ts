@@ -262,11 +262,14 @@ body[data-ds-dark-theme] .dshr-flow-body.dshr-flow-body :not(pre) > code {
   outline-offset: 2px;
 }
 
+/* The failed card names the authored destination, so a wrong extension or a
+   misspelled folder shows up on screen instead of in a console. */
 .dshr-image-failed {
   padding: 8px 12px;
   color: var(--dsw-alias-label-tertiary);
   font-size: 12px;
   line-height: 20px;
+  overflow-wrap: anywhere;
 }
 
 /* ---- Icon-card group ---- */

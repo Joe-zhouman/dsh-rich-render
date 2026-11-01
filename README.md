@@ -9,7 +9,7 @@
 | 项 | 值 |
 |---|---|
 | 包名 | `dsh-rich-render` |
-| 版本 | `0.9.26`（`private`，不发布） |
+| 版本 | `0.9.27`（`private`，不发布） |
 | 类型 | host + client bundle（`dsh.client.platform: web`，自带 `dsh.bundle.patch`） |
 | 宿主半区入口 | `lib/index.js`（由 `index.mjs` 构建；预构建产物随仓库提交） |
 | 浏览器半区入口 | `lib/client.js`（CJS factory，预构建产物随仓库提交） |
@@ -283,6 +283,10 @@ spec 设想独立 channel `/rich-render`。实际：自定义 channel 的 `rpc.h
 ## 修订记录（2026-10-25，v0.2.1）
 
 persona.md 措辞修订（用户编辑，无代码改动，测试 108/108 仍绿）：富渲染总则改为「解释论证默认连贯段落」，收紧原生无序列表与有序列表的使用条件；stack 用途扩展为「同一阶段内多个方向或方案的分组说明」并写明与多级列表的取舍（回应上面"stack 未被自发使用"观察项）；「选择」节从条目列表改为连贯段落。persona 为运行时资产，宿主启动时一次性读入。desktop profile 已 remove+add 刷新至 0.2.1（运行中的桌面端重启后生效）；web profile 仍装 0.2.0（persona 为旧版），需要时同法刷新。
+
+## 修订记录（2026-11-02，v0.9.27）
+
+用户问「图片为什么无法渲染」：那条图的 Markdown 指向 `.preview-choices\img-new.html`（我贴错文件，是网页不是图片），卡片按设计走了失败分支。顺手把失败分支的信息改准：原来显示 `alt || 原路径`，作者写了 alt 时路径就被吃掉（这次显示成「图片无法预览 · 改后同一张图」，看不出是哪个文件错了）；现在固定显示作者写的目标（原路径/URL），alt 移到 `title` 悬停提示，长路径断行（`overflow-wrap: anywhere`），错误一眼可查。测试 161 项仍全绿。两 profile 已刷，桌面端完全退出重开、web 刷新生效。
 
 ## 修订记录（2026-11-02，v0.9.26）
 

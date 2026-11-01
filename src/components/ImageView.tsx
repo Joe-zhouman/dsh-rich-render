@@ -76,8 +76,8 @@ export const ImageView = memo(function ImageView({ segment, chrome }: {
   }, [url])
   if (url === undefined || failed) {
     return (
-      <div className="dshr-fence dshr-image dshr-image-failed">
-        {chrome.imagePreviewFailed} · {segment.alt || segment.url}
+      <div className="dshr-fence dshr-image dshr-image-failed" title={segment.alt === '' ? undefined : segment.alt}>
+        {chrome.imagePreviewFailed} · {segment.url}
       </div>
     )
   }
