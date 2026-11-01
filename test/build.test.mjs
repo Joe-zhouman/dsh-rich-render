@@ -94,6 +94,7 @@ function stubReact() {
 
 /** The primitives face the components reference at module scope. */
 const PRIMITIVES = {
+  CodeBlock: () => null,
   DisclosureRow: () => null,
   IconCheckOutlineRegular: () => null,
   IconCopyOutlineRegular: () => null,

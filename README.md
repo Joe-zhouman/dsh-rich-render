@@ -9,7 +9,7 @@
 | 项 | 值 |
 |---|---|
 | 包名 | `dsh-rich-render` |
-| 版本 | `0.9.19`（`private`，不发布） |
+| 版本 | `0.9.20`（`private`，不发布） |
 | 类型 | host + client bundle（`dsh.client.platform: web`，自带 `dsh.bundle.patch`） |
 | 宿主半区入口 | `lib/index.js`（由 `index.mjs` 构建；预构建产物随仓库提交） |
 | 浏览器半区入口 | `lib/client.js`（CJS factory，预构建产物随仓库提交） |
@@ -121,7 +121,7 @@ v2 已上线：行数 2~550（实现容差）、纯数字正则（含科学计�
 - 仅支持 `matplotlib` 围栏，不支持 seaborn；persona 仅在检测到 Python + matplotlib + numpy 时注入，并注入三者版本。
 - 必须内嵌数据；不读工作区文件、不联网；不要假设 pandas/seaborn；一个 cell 一张图。
 - 首次渲染自动执行；缓存 key = 代码 + backend + 主题 + 库版本 + 字体 + DPI；失败结果也缓存，**不设手动重试按钮**；超时/失败显示代码与错误，不重复自动执行。
-- UI：右上角图标工具条 `代码 / 图表` + `复制 / 下载`；成功默认图表页，失败默认代码页；功能关闭或环境缺失时退化为普通 Python 代码块。
+- UI：右上角图标工具条 `代码 / 图表` + `复制 / 下载`；代码页用平台 `CodeBlock`（`lang="python"`，shiki 高亮、语言标题、复制/换行动作与正文代码块一致）；成功默认图表页，失败默认代码页；功能关闭或环境缺失时退化为普通 Python 代码块。
 - 复杂图、交互图、artifacts、Plotly、kernel、文件交付提示都不在 rich-render 范围；这里是终点。
 
 ### persona
@@ -282,6 +282,9 @@ spec 设想独立 channel `/rich-render`。实际：自定义 channel 的 `rpc.h
 
 persona.md 措辞修订（用户编辑，无代码改动，测试 108/108 仍绿）：富渲染总则改为「解释论证默认连贯段落」，收紧原生无序列表与有序列表的使用条件；stack 用途扩展为「同一阶段内多个方向或方案的分组说明」并写明与多级列表的取舍（回应上面"stack 未被自发使用"观察项）；「选择」节从条目列表改为连贯段落。persona 为运行时资产，宿主启动时一次性读入。desktop profile 已 remove+add 刷新至 0.2.1（运行中的桌面端重启后生效）；web profile 仍装 0.2.0（persona 为旧版），需要时同法刷新。
 
+## 修订记录（2026-11-01，v0.9.20）
+
+用户要求 matplotlib 的代码页按 Python 渲染。原来代码页把 `segment.source`（整段围栏文本）交给 `MarkdownText`，语言标成 `matplotlib`、没有对应文法，于是只有一块无高亮的纯文本。现在改为平台的 `CodeBlock`：`code={segment.code}`（围栏内的 Python 源码）、`lang="python"`、`streaming={false}`，标签直接用 `labels.code`（`copyLabel` / `copiedLabel` / `toolbarLabels`），因此拿到 shiki 语法高亮、语言标题、复制与换行动作，和正文里的 python 代码块完全同款。功能关闭或环境不可用时仍按原围栏文本退化（`MarkdownText`）。`build.test.mjs` 的 primitives 桩补了 `CodeBlock`。160 项测试全绿。两 profile 已刷，桌面端重启生效。
 ## 修订记录（2026-11-01，v0.9.19）
 
 图标集到了（`L:\works\news\icons-minimal-svg`，Lucide/Feather 两套原始 SVG，推荐 Lucide）。工具条一次做完：新增 `FenceToolbar`（`.dshr-toolbar`），两个图表单元共用——左半是视图 tab（表格/图表、代码/图表），中间一条 `border-l2` 竖发丝线，右半是动作（复制、下载），整条 `justify-content: flex-end` 靠右；按钮 26×26、16px 图标、`--dsw-radius-sm` 圆角，hover/激活都是 `interactive-bg-hover` 底 + 主色图标，`:focus-visible` 2px `link` 描边，全部 `Tooltip`（`side=bottom`、`portal`）+ `aria-label`，界面上不再出现按钮文字。图标路径内联进插件自己的 Lucide 集合（`src/rules/icons.ts` 新增 table / chart / download / copy，`code` 原本就有；表格与复制里的圆角 `rect` 改写成等价 path，保持 `IconPaths` 只有 path 的形状）。复制：`chart-download.ts` 拆出 `chartPngBlob`（原 `downloadChartPng` 的光栅化部分），新增 `copyChartPng` 写 `ClipboardItem` 到剪贴板；matplotlib 侧直接把 dataURL 取 blob 写入。`FenceToolbar` 自己管复制反馈（成功换 check、失败换 alert-triangle 并染 `state-error-primary`，1.5s 后回到 idle，卸载时清定时器）；图表未就绪时复制与下载按钮 `disabled`。文案收敛：新增 locale `copyFailed`，图片卡与图表工具条共用 `copy`/`copied`/`copyFailed`，删掉重复的 `imageCopy`/`imageCopied`/`imageCopyFailed`。`build.test.mjs` 的表格工具条断言改成「四个 `dshr-toolbar-btn`，`aria-label` 依次 viewTable/viewChart/copy/downloadChart，图表默认激活，复制与导出都接上 onClick」，图片卡断言里的 label 改为 `copy`。160 项测试全绿。两 profile 已刷，桌面端重启生效。

@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState } from 'react'
-import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives'
+import { CodeBlock, MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { MarkdownLabels } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { MatplotlibSegment } from '../rules/segments.ts'
 import { matplotlibExec, matplotlibStatus, type MatplotlibRunResult } from '../matplotlib-bridge.ts'
@@ -86,7 +86,18 @@ export function MatplotlibView({ segment, labels, chrome }: MatplotlibViewProps)
         downloadLabel={chrome.mplDownloadPng}
         disabled={image === undefined}
       />
-      {tab === 'code' && <MarkdownText text={segment.source} labels={labels} />}
+      {/* The source is Python, so it renders through the platform's code card
+          with the python grammar rather than as a plain fence. */}
+      {tab === 'code' && (
+        <CodeBlock
+          code={segment.code}
+          lang="python"
+          streaming={false}
+          copyLabel={labels.code.copyLabel}
+          copiedLabel={labels.code.copiedLabel}
+          toolbarLabels={labels.code.toolbarLabels}
+        />
+      )}
       {tab === 'chart' && (
         phase === 'running' || phase === 'done'
           ? (
