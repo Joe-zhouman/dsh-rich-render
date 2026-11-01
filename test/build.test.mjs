@@ -383,7 +383,7 @@ test('markdown image syntax keeps the local-path vocabulary in native bodies; st
   assert.equal(buildOnce().status, 0, 'the artifact is only judged from a successful build')
   const { react, jsxRuntime } = stubReact()
   const markdownTexts = []
-  const { loaded } = loadClient({
+  const { loaded, dom } = loadClient({
     'react': react,
     'react/jsx-runtime': jsxRuntime,
     '@deepseek-ai/dsh-client-ui-primitives': {
@@ -452,6 +452,12 @@ test('markdown image syntax keeps the local-path vocabulary in native bodies; st
     'the copy action renders an icon element rather than the word')
   assert.equal(listBody.pathImages.resolve('C:/tmp/out.png'), 'http://localhost/api/file?path=C%3A%2Ftmp%2Fout.png')
   assert.equal(listBody.pathImages.resolve('https://example.com/x.png'), undefined, 'remote URLs stay direct, not rewritten')
+  // The card hugs the picture and lets it keep the column width, so a portrait
+  // screenshot is neither shrunk into a narrow strip nor framed by empty sides.
+  const sheet = dom.window.document.querySelector('style[data-plugin-css="dsh-rich-render/styles"]').textContent
+  assert.match(sheet, /\.dshr-image \{[\s\S]*?width: fit-content;[\s\S]*?max-width: 100%;/u)
+  assert.match(sheet, /\.dshr-image-img \{[\s\S]*?max-width: 100%;[\s\S]*?max-height: 1200px;/u)
+  assert.doesNotMatch(sheet, /max-height: 360px/u, 'the old height cap shrank every screenshot into a strip')
 })
 
 test('tab fence renders the tab bar and the first page only', () => {

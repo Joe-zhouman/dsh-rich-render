@@ -209,16 +209,24 @@ body[data-ds-dark-theme] .dshr-flow-body.dshr-flow-body :not(pre) > code {
 }
 
 /* ---- Image card: a body image in the shared fence with a copy action ---- */
+/* The card wraps the picture instead of spanning the column, so a portrait
+   screenshot never sits in a wide empty frame. The picture keeps its column
+   width and is only capped for heights no message can reasonably carry. */
 .dshr-image {
   position: relative;
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: 100%;
   padding: 10px;
 }
 
 .dshr-image-img {
   display: block;
   max-width: 100%;
-  max-height: 360px;
-  margin: 0 auto;
+  max-height: 1200px;
+  height: auto;
+  margin: 0;
+  border-radius: var(--dsw-radius-md, 8px);
 }
 
 /* Icon-only copy action: the platform's clipboard glyph on a frosted surface,
