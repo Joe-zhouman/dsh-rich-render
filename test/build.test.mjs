@@ -182,7 +182,7 @@ test('the client artifact loads through the module table and replaces the assist
   assert.match(fonts['--dsw-font-family'].light, /'Microsoft YaHei'/u)
   assert.match(fonts['--dsw-font-family-brand'].light, /^'Segoe UI'/u)
   assert.equal(fonts['--dsw-font-family'].light, fonts['--dsw-font-family'].dark)
-  assert.match(fonts['--ds-font-family-code'].light, /^'Fira Code'/u)
+  assert.match(fonts['--ds-font-family-code'].light, /^Consolas, 'Fira Code'/u)
   assert.equal(fonts['--ds-font-family-code'].light, fonts['--ds-font-family-code'].dark)
   assert.deepEqual(localeNames, ['richRender'])
   assert.deepEqual(declared, ['conversation.chat.node', 'shell.overlay'])

@@ -28,12 +28,13 @@ export const inject = ['slots', 'locale', 'connection', 'theme']
 const UI_FONT_STACK = "'Segoe UI', ui-sans-serif, system-ui, -apple-system, Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif"
 
 /**
- * Code face: Fira Code first, then the platform's monospace stack. The CJK
- * faces behind it draw the characters Fira Code has no glyph for; the bare
- * `monospace` tail stays off so Chinese never falls back to SimSun, matching
- * the platform's own code token.
+ * Code face: Consolas leads — on Windows it renders the transcript surface
+ * better than Fira Code — with Fira Code next for machines without it, then
+ * the platform's monospace stack. The CJK faces behind them draw the
+ * characters no mono face has; the bare `monospace` tail stays off so Chinese
+ * never falls back to SimSun, matching the platform's own code token.
  */
-const CODE_FONT_STACK = "'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', 'Microsoft YaHei UI', 'PingFang SC', 'Noto Sans CJK SC'"
+const CODE_FONT_STACK = "Consolas, 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, 'Liberation Mono', 'Courier New', 'Microsoft YaHei UI', 'PingFang SC', 'Noto Sans CJK SC'"
 
 /** Install the stylesheet, dictionary, the matplotlib bridge, the assistant-step replacement, and the watermark overlay. */
 export function apply(ctx: ClientCtx): void {
