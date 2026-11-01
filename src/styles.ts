@@ -221,22 +221,37 @@ body[data-ds-dark-theme] .dshr-flow-body.dshr-flow-body :not(pre) > code {
   margin: 0 auto;
 }
 
+/* Icon-only copy action: the platform's clipboard glyph on a frosted surface,
+   so it stays readable over whatever picture sits underneath. */
 .dshr-image-copy {
   position: absolute;
   top: 8px;
   right: 8px;
-  padding: 2px 9px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
   border: none;
-  border-radius: 6px;
-  background: var(--dsw-alias-interactive-bg-hover);
+  border-radius: var(--dsw-radius-sm, 8px);
+  background: color-mix(in srgb, var(--dsw-alias-bg-base) 82%, transparent);
+  box-shadow: 0 0 0 0.5px var(--dsw-alias-border-l2);
   color: var(--dsw-alias-label-secondary);
-  font-size: 11px;
-  line-height: 18px;
   cursor: pointer;
 }
 
 .dshr-image-copy:hover {
+  background: var(--dsw-alias-bg-base);
   color: var(--dsw-alias-label-primary);
+}
+
+.dshr-image-copy[data-state='error'] {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+.dshr-image-copy:focus-visible {
+  outline: 2px solid var(--dsw-alias-link);
+  outline-offset: 2px;
 }
 
 .dshr-image-failed {

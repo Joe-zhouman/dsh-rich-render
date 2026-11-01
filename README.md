@@ -9,7 +9,7 @@
 | 项 | 值 |
 |---|---|
 | 包名 | `dsh-rich-render` |
-| 版本 | `0.9.16`（`private`，不发布） |
+| 版本 | `0.9.17`（`private`，不发布） |
 | 类型 | host + client bundle（`dsh.client.platform: web`，自带 `dsh.bundle.patch`） |
 | 宿主半区入口 | `lib/index.js`（由 `index.mjs` 构建；预构建产物随仓库提交） |
 | 浏览器半区入口 | `lib/client.js`（CJS factory，预构建产物随仓库提交） |
@@ -282,6 +282,9 @@ spec 设想独立 channel `/rich-render`。实际：自定义 channel 的 `rpc.h
 
 persona.md 措辞修订（用户编辑，无代码改动，测试 108/108 仍绿）：富渲染总则改为「解释论证默认连贯段落」，收紧原生无序列表与有序列表的使用条件；stack 用途扩展为「同一阶段内多个方向或方案的分组说明」并写明与多级列表的取舍（回应上面"stack 未被自发使用"观察项）；「选择」节从条目列表改为连贯段落。persona 为运行时资产，宿主启动时一次性读入。desktop profile 已 remove+add 刷新至 0.2.1（运行中的桌面端重启后生效）；web profile 仍装 0.2.0（persona 为旧版），需要时同法刷新。
 
+## 修订记录（2026-11-01，v0.9.17）
+
+用户要求图片卡右上角的复制按钮别再写「复制」两个字，改用 DSH 原生的复制图标。改成平台 `CodeToolbar` 的同一套做法：`Tooltip`（`side=top`、`align=end`、`portal`）+ `aria-label`，图标用 `IconCopyOutlineRegular`（16px），复制成功换 `IconCheckOutlineRegular`，失败换 `IconWarningOutlineRegular` 并染 `--dsw-alias-state-error-primary`；按钮从文字条改成 26×26 的图标按钮（`--dsw-radius-sm`、`color-mix(bg-base 82%)` 磨砂底 + 0.5px `border-l2` 发丝线），压在任意图片上都读得清，hover 提高不透明度并提亮图标，`:focus-visible` 2px `link` 描边。行为不变：点击仍把图片光栅化为 PNG 写剪贴板，失败态保留到下次点击。`build.test.mjs` 的 primitives 桩补了 `Tooltip` 与三个图标，并新增断言「图片卡有一个 `dshr-image-copy` 动作、带 `aria-label`、子节点是图标元素而不是文字」。160 项测试全绿。两 profile 已刷，桌面端重启生效。
 ## 修订记录（2026-11-01，v0.9.16）
 
 用户反馈 0.9.15 的底色偏深，要「前后两者之间」：权重从 10% 降到 6%（浅色下合成约 241 灰，落在平台 250 与上一版 231 之间）。深色下 6% 反而比平台色更深（深色底本身已接近文字色），所以补一条 `body[data-ds-dark-theme]` 作用域把深色权重提到 9%（合成约 42，介于平台的 41 与 10% 的 44 之间）。4px 圆角、无描边、`inline` + `1px 6px` 不变。160 项测试全绿。两 profile 已刷，桌面端重启生效。

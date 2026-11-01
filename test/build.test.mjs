@@ -95,9 +95,13 @@ function stubReact() {
 /** The primitives face the components reference at module scope. */
 const PRIMITIVES = {
   DisclosureRow: () => null,
+  IconCheckOutlineRegular: () => null,
+  IconCopyOutlineRegular: () => null,
   IconThinkOutlineRegular: () => null,
+  IconWarningOutlineRegular: () => null,
   JsonBlock: () => null,
   MarkdownText: () => null,
+  Tooltip: ({ children }) => children,
 }
 
 /**
@@ -429,7 +433,7 @@ test('markdown image syntax keeps the local-path vocabulary in native bodies; st
     fileMentions: () => undefined,
     t: key => key,
   }, react)
-  renderStub(element)
+  const tree = renderStub(element)
   const listBody = markdownTexts.find(props => props.text?.includes('![结果]'))
   const tailPara = markdownTexts.find(props => props.text?.includes('第二段'))
   for (const found of [listBody, tailPara]) {
@@ -438,6 +442,13 @@ test('markdown image syntax keeps the local-path vocabulary in native bodies; st
   }
   const upgradedAway = markdownTexts.find(props => props.text?.includes('![现场]'))
   assert.equal(upgradedAway, undefined, 'a standalone body image now upgrades to the image card')
+  // The card's action is the platform clipboard icon, not a text label.
+  const copyAction = collectStub(tree, node =>
+    String(node.props?.className ?? '').includes('dshr-image-copy'))
+  assert.equal(copyAction.length, 1, 'the image card carries one copy action')
+  assert.equal(copyAction[0].props['aria-label'], 'imageCopy')
+  assert.equal(typeof copyAction[0].props.children, 'object',
+    'the copy action renders an icon element rather than the word')
   assert.equal(listBody.pathImages.resolve('C:/tmp/out.png'), 'http://localhost/api/file?path=C%3A%2Ftmp%2Fout.png')
   assert.equal(listBody.pathImages.resolve('https://example.com/x.png'), undefined, 'remote URLs stay direct, not rewritten')
 })

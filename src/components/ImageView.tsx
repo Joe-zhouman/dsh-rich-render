@@ -7,6 +7,9 @@
  */
 
 import { memo, useCallback, useState } from 'react'
+import {
+  IconCheckOutlineRegular, IconCopyOutlineRegular, IconWarningOutlineRegular, Tooltip,
+} from '@deepseek-ai/dsh-client-ui-primitives'
 import { localPathMediaUrl } from '../markdown-fallback.ts'
 import type { ImageSegment } from '../rules/segments.ts'
 import type { RichChrome } from './RichMarkdownText.tsx'
@@ -78,13 +81,23 @@ export const ImageView = memo(function ImageView({ segment, chrome }: {
       </div>
     )
   }
+  const label = copyState === 'done'
+    ? chrome.imageCopied
+    : copyState === 'error' ? chrome.imageCopyFailed : chrome.imageCopy
   return (
     <div className="dshr-fence dshr-image">
       <img className="dshr-image-img" src={url} alt={segment.alt}
         onError={() => { setFailed(true) }} loading="lazy" decoding="async" referrerPolicy="no-referrer" />
-      <button type="button" className="dshr-image-copy" onClick={copy}>
-        {copyState === 'done' ? chrome.imageCopied : copyState === 'error' ? chrome.imageCopyFailed : chrome.imageCopy}
-      </button>
+      <Tooltip label={label} side="top" align="end" portal>
+        <button type="button" className="dshr-image-copy" aria-label={label}
+          data-state={copyState === 'idle' ? undefined : copyState} onClick={copy}>
+          {copyState === 'done'
+            ? <IconCheckOutlineRegular size={16} />
+            : copyState === 'error'
+              ? <IconWarningOutlineRegular size={16} />
+              : <IconCopyOutlineRegular size={16} />}
+        </button>
+      </Tooltip>
     </div>
   )
 })
