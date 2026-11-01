@@ -21,6 +21,7 @@ import { CalloutView } from './CalloutView.tsx'
 import { CardsView } from './CardsView.tsx'
 import { ChecklistView } from './ChecklistView.tsx'
 import { ChoicesView } from './ChoicesView.tsx'
+import { ImageView } from './ImageView.tsx'
 import { MatplotlibView } from './MatplotlibView.tsx'
 import { MindmapView } from './MindmapView.tsx'
 import { StackView } from './StackView.tsx'
@@ -43,6 +44,11 @@ export interface RichChrome {
   readonly mplRunning: string
   readonly mplFailed: string
   readonly mplDownloadPng: string
+  /** Image-card copy action and degradation copy. */
+  readonly imageCopy: string
+  readonly imageCopied: string
+  readonly imageCopyFailed: string
+  readonly imagePreviewFailed: string
   /** Alert titles keyed by GitHub alert flavor. */
   readonly calloutTitles: Readonly<Record<CalloutType, string>>
 }
@@ -79,6 +85,8 @@ function SegmentView({ segment, labels, mentions, chrome }: {
       return <ChoicesView segment={segment} labels={labels} mentions={mentions} chrome={chrome} />
     case 'matplotlib':
       return <MatplotlibView segment={segment} labels={labels} chrome={chrome} />
+    case 'image':
+      return <ImageView segment={segment} chrome={chrome} />
     default:
       // Unreachable today: upgradeText's union is closed; new kinds land
       // here and a missing case fails the golden-set regression.
@@ -116,12 +124,10 @@ export const RichMarkdownText = memo(function RichMarkdownText({ text, streaming
   }
   let segments: UpgradeSegment[]
   try {
-    // Native runs get the local-path image fallback (bare and code-wrapped
-    // paths become standard images); each segment's `source` keeps the
-    // authored text so a boundary fallback shows the original display.
-    segments = upgradeText(text).map(segment => segment.kind === 'native'
-      ? { ...segment, text: rewritePathImages(segment.text) }
-      : segment)
+    // The image pass runs first on the whole text: paths become standard
+    // images and body images split into their own paragraphs, so the walk
+    // meets each image standalone and upgrades it to the framed card.
+    segments = upgradeText(rewritePathImages(text))
   } catch {
     return <MarkdownText text={rewritePathImages(text)} labels={labels} fileMentions={mentions} pathImages={pathImages} />
   }

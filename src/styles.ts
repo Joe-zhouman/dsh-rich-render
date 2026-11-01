@@ -185,6 +185,44 @@ export const STYLESHEET = `
   border-radius: 10px;
 }
 
+/* ---- Image card: a body image in the shared fence with a copy action ---- */
+.dshr-image {
+  position: relative;
+  padding: 10px;
+}
+
+.dshr-image-img {
+  display: block;
+  max-width: 100%;
+  max-height: 360px;
+  margin: 0 auto;
+}
+
+.dshr-image-copy {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 2px 9px;
+  border: none;
+  border-radius: 6px;
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-secondary);
+  font-size: 11px;
+  line-height: 18px;
+  cursor: pointer;
+}
+
+.dshr-image-copy:hover {
+  color: var(--dsw-alias-label-primary);
+}
+
+.dshr-image-failed {
+  padding: 8px 12px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 20px;
+}
+
 /* ---- Icon-card group ---- */
 .dshr-cards {
   display: flex;

@@ -64,6 +64,10 @@ export const RichAssistantNodeView = memo(function RichAssistantNodeView({
     mplRunning: t('mplRunning'),
     mplFailed: t('mplFailed'),
     mplDownloadPng: t('mplDownloadPng'),
+    imageCopy: t('imageCopy'),
+    imageCopied: t('imageCopied'),
+    imageCopyFailed: t('imageCopyFailed'),
+    imagePreviewFailed: t('imagePreviewFailed'),
     calloutTitles: {
       note: t('calloutNote'),
       tip: t('calloutTip'),

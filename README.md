@@ -9,7 +9,7 @@
 | 项 | 值 |
 |---|---|
 | 包名 | `dsh-rich-render` |
-| 版本 | `0.9.8`（`private`，不发布） |
+| 版本 | `0.9.9`（`private`，不发布） |
 | 类型 | host + client bundle（`dsh.client.platform: web`，自带 `dsh.bundle.patch`） |
 | 宿主半区入口 | `lib/index.js`（由 `index.mjs` 构建；预构建产物随仓库提交） |
 | 浏览器半区入口 | `lib/client.js`（CJS factory，预构建产物随仓库提交） |
@@ -42,7 +42,7 @@
 
 已退役的自动判定：多层级无序列表 → 思维导图（v0.2.0，改 `mindmap` 围栏）、阶段/Step/第X步/Phase 序列 → 时间线（v0.3.0，改 `timeline` 围栏）。相位标题有序列表不再让位时间线，随普通规则进卡片组。
 
-本地路径图片兜底（v0.9.8）：正文段落里的裸绝对路径（`L:\out\pic.png`、`/home/u/pic.png`）与反引号包裹的同样路径，在 settle 后重写为标准图片语法再交给平台渲染；文件不存在或路径不可解析时按 alt 文本回退，即原始路径字符串的纯文本显示。仅限图片扩展名（png/jpg/jpeg/gif/webp/bmp/svg/ico/avif）与绝对路径；链接内、图片语法内、代码围栏、表格、标题中的路径不动。
+本地路径图片兜底与图片卡（v0.9.8 起，v0.9.9 成型）：正文段落里的裸绝对路径（`L:\out\pic.png`、`/home/u/pic.png`）与反引号包裹的同样路径，在 settle 后重写为标准图片语法；顶层段落里的图片（模型写的标准图片含在内）一律用空行拆成独立段落，永不与文字同行。每个独立图片段升格为**图片卡**：与其他围栏同款外框（1px border-l2 + 10px 圆角）、右上角「复制」按钮把图片光栅化为 PNG 写入系统剪贴板（跨域图或超大图复制失败时按钮显示失败）；目标不可解析或文件加载失败时卡片内显示「图片无法预览 · 原路径」。路径重写仅限图片扩展名（png/jpg/jpeg/gif/webp/bmp/svg/ico/avif）与绝对路径；列表项与表格内不拆段不重写（拆开会破坏容器），引用块内重写但不拆段；链接内、代码围栏、标题中的路径不动。
 
 清单（GFM 任务列表）的字段与交互：
 
@@ -65,7 +65,7 @@
 cd L:/dsh/.local-deploy/rich-render-plugin
 pnpm install        # 依赖：mdast 解析层 + react 类型（构建期）
 pnpm run build      # tsdown 双 pass：lib/index.js（host 空 apply）+ lib/client.js（CJS factory）
-pnpm test           # node --test + 类型剥离：154 项（规则/清单/图表决策/路径图片兜底/golden set/水印配置/构建产物）
+pnpm test           # node --test + 类型剥离：160 项（规则/清单/图表决策/路径图片兜底/golden set/水印配置/构建产物）
 ```
 
 装机见 [INSTALL.md](INSTALL.md)：桌面端应用内安装、web 的 `dsh plugin add`、file: 依赖、matplotlib 配置、验证与卸载都在那里。本机 web/desktop 两个 profile 已用 file: 依赖装好。
@@ -279,6 +279,10 @@ spec 设想独立 channel `/rich-render`。实际：自定义 channel 的 `rpc.h
 ## 修订记录（2026-10-25，v0.2.1）
 
 persona.md 措辞修订（用户编辑，无代码改动，测试 108/108 仍绿）：富渲染总则改为「解释论证默认连贯段落」，收紧原生无序列表与有序列表的使用条件；stack 用途扩展为「同一阶段内多个方向或方案的分组说明」并写明与多级列表的取舍（回应上面"stack 未被自发使用"观察项）；「选择」节从条目列表改为连贯段落。persona 为运行时资产，宿主启动时一次性读入。desktop profile 已 remove+add 刷新至 0.2.1（运行中的桌面端重启后生效）；web profile 仍装 0.2.0（persona 为旧版），需要时同法刷新。
+
+## 修订记录（2026-11-01，v0.9.9）
+
+用户三点要求：图片不得与文字同行（混排要拆出来前后空行）、图片渲染成与其他围栏同款外框、右上角加「复制」按钮把图片放进剪贴板。实现：`rewritePathImages` 升级为拆段语义——重写移到 `upgradeText` 之前对整文本执行；顶层段落内裸/code 路径重写为标准图片语法并用空行拆成独立段落（拆段只 blank 仍有内容的一侧，幂等），**模型写的标准正文图片同样拆段**；list/table 子树跳过（拆开会破坏容器）、blockquote 内重写不拆段。新增 `matchImage` matcher：纯图片段落（可选前后空白 text + 单 image）升格为 `ImageSegment { url, alt, source }`，`ImageView` 渲染——`.dshr-fence` 同款外框、图片 max-height 360 居中、右上角「复制」按钮（`img` + canvas 光栅化为 PNG 经 `navigator.clipboard.write` 写剪贴板，跨域污染/超大图/宿主拒绝时按钮显示「复制失败」）、目标不可解析或 onError 时显示「图片无法预览 · 原路径」；错误边界回退仍是 source 原文走平台 MarkdownText。locale 新增 imageCopy/imageCopied/imageCopyFailed/imagePreviewFailed（zh/en），RichChrome 透传。行为变更：顶层标准图片不再走平台 MarkdownText 的 pathImages（改由 ImageView 自行 resolve，HTTP(S) 直用、绝对本地路径走 file 路由）；列表项内图片仍走平台渲染。build.test 的图片词汇断言随行为更新（列表项 body 保留 pathImages 断言，顶层图片断言升级为「不再经过 MarkdownText」）。测试 154 → 160 项全绿。两 profile 已刷，桌面端重启生效。
 
 ## 修订记录（2026-11-01，v0.9.8）
 

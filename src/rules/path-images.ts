@@ -1,20 +1,22 @@
 /**
- * Fallback image syntax for authored local paths.
+ * Fallback image syntax for authored local paths, and standalone-image
+ * layout for every body image.
  *
  * The persona teaches the standard Markdown image form, but a model that
  * ignores it still names real picture files: a bare absolute path in prose,
  * or the same path wrapped in inline code. This pass rewrites both shapes
- * into the standard form before the platform renderer sees them, so its
- * existing two-level fallback applies verbatim — a path the vocabulary
- * cannot resolve, or a file that fails to load, degrades to alt text that
- * carries the original path string, i.e. exactly the authored display.
+ * into the standard form before the rule walk sees them, so the platform's
+ * fallback display (the alt text) carries the original path string.
  *
- * Only a paragraph's direct text and inline-code children are rewritten:
- * link and image children, headings, tables, and fenced or indented code
- * never enter the match, so no authored image syntax is rewritten twice.
+ * An image never shares a line with prose: in top-level paragraphs every
+ * rewritten path — and every authored image — is fenced off with blank
+ * lines, so the rule walk meets each image as its own paragraph and upgrades
+ * it to the framed image card. Lists and tables keep their paths literal
+ * (splitting there would break the container), and blockquote paragraphs
+ * rewrite in place without splitting.
  */
 
-import type { InlineCode, Nodes, Paragraph, Text } from 'mdast'
+import type { InlineCode, Nodes, Paragraph, Root, Text } from 'mdast'
 import { nodeSource, parseBlocks } from './parse.ts'
 
 /** Drawable extensions the file route can serve and browsers display. */
@@ -65,65 +67,101 @@ interface Edit {
   readonly replacement: string
 }
 
-/** Rewrite one inline-code child whose whole value names an image file. */
-function inlineCodeEdit(text: string, node: InlineCode, edits: Edit[]): void {
-  const value = node.value.trim()
-  if (!isLocalImagePath(value)) return
+/** Node offsets as an editable span, or undefined when positions are unusable. */
+function nodeSpan(text: string, node: Nodes): { start: number; end: number } | undefined {
   const start = node.position?.start.offset
   const end = node.position?.end.offset
-  if (start === undefined || end === undefined || start > end || end > text.length) return
-  if (nodeSource(text, node) === '') return
-  edits.push({ start, end, replacement: markdownImage(value) })
+  if (start === undefined || end === undefined || start > end || end > text.length) return undefined
+  return { start, end }
 }
 
-/** Rewrite every bare image path inside one text child. */
-function textEdits(text: string, node: Text, edits: Edit[]): void {
-  const start = node.position?.start.offset
-  const end = node.position?.end.offset
-  if (start === undefined || end === undefined || start > end || end > text.length) return
-  const slice = text.slice(start, end)
-  for (const match of slice.matchAll(BARE_PATH)) {
-    const found = match[0]
-    const at = match.index ?? -1
-    if (found === undefined || at < 0 || !isLocalImagePath(found)) continue
-    edits.push({ start: start + at, end: start + at + found.length, replacement: markdownImage(found) })
+/**
+ * One paragraph's direct phrasing children: inline-code whose whole value
+ * names an image file, bare image paths inside text, and (top level only)
+ * authored image nodes splitting off into their own paragraph. A split
+ * blanks the side that still carries content, so re-running the pass on its
+ * own output adds nothing (the image already sits at a block boundary).
+ * @param text - complete document source.
+ * @param paragraph - one paragraph node.
+ * @param standalone - true in a top-level paragraph: replacements may split into their own blocks.
+ * @param edits - collected source edits.
+ */
+function collectEdits(text: string, paragraph: Paragraph, standalone: boolean, edits: Edit[]): void {
+  const paraSpan = nodeSpan(text, paragraph)
+  const split = (start: number, end: number, replacement: string): string => {
+    if (!standalone || paraSpan === undefined) return replacement
+    const lead = text.slice(paraSpan.start, start).trim() === '' ? '' : '\n\n'
+    const trail = text.slice(end, paraSpan.end).trim() === '' ? '' : '\n\n'
+    return `${lead}${replacement}${trail}`
   }
-}
-
-/** Collect every paragraph below one node; tables stay out (cells are plain). */
-function collectParagraphs(node: Nodes, out: Paragraph[]): void {
-  if (node.type === 'paragraph') {
-    out.push(node)
-    return
-  }
-  if (node.type !== 'table' && 'children' in node) {
-    for (const child of node.children) collectParagraphs(child, out)
+  for (const child of paragraph.children) {
+    if (child.type === 'inlineCode') {
+      const value = child.value.trim()
+      const span = nodeSpan(text, child)
+      if (span === undefined || !isLocalImagePath(value)) continue
+      edits.push({ ...span, replacement: split(span.start, span.end, markdownImage(value)) })
+    } else if (child.type === 'text') {
+      const span = nodeSpan(text, child)
+      if (span === undefined) continue
+      const slice = text.slice(span.start, span.end)
+      for (const match of slice.matchAll(BARE_PATH)) {
+        const found = match[0]
+        const at = match.index ?? -1
+        if (found === undefined || at < 0 || !isLocalImagePath(found)) continue
+        const start = span.start + at
+        edits.push({ start, end: start + found.length, replacement: split(start, start + found.length, markdownImage(found)) })
+      }
+    } else if (child.type === 'image' && standalone) {
+      const span = nodeSpan(text, child)
+      const source = span === undefined ? '' : text.slice(span.start, span.end)
+      if (source === '') continue
+      edits.push({ ...span, replacement: split(span.start, span.end, source) })
+    }
   }
 }
 
 /**
+ * Walk the tree collecting paragraph edits: root and blockquote children
+ * contribute, list and table subtrees stay literal (splitting inside a list
+ * item or a quote breaks the container).
+ * @param node - subtree root.
+ * @param text - complete document source.
+ * @param standalone - whether paragraphs at this depth may split into their own blocks.
+ * @param edits - collected source edits.
+ */
+function walkTree(node: Nodes, text: string, standalone: boolean, edits: Edit[]): void {
+  if (node.type === 'paragraph') {
+    collectEdits(text, node, standalone, edits)
+    return
+  }
+  if (node.type === 'list' || node.type === 'table' || !('children' in node)) return
+  // Only the document root's own paragraphs split; anything deeper (inside a
+  // quote, or a list item the list guard already excluded) rewrites in place.
+  for (const child of node.children) walkTree(child, text, standalone && node.type === 'root', edits)
+}
+
+/**
  * Rewrite bare and code-wrapped local image paths into standard Markdown
- * images. Pure and total: any input returns text at least as displayable as
- * it came in — an empty edit set, a parse throw, or a position miss simply
- * keeps the source untouched.
- * @param text - Markdown source of one native segment.
- * @returns Source with matching paths rewritten to `![path](<path>)`.
+ * images, and split top-level body images (authored or rewritten) into their
+ * own paragraphs. Pure and total: any input returns text at least as
+ * displayable as it came in — an empty edit set, a parse throw, or a
+ * position miss simply keeps the source untouched.
+ * @param text - Markdown source of one text block.
+ * @returns Source with paths rewritten and images fenced off as paragraphs.
  */
 export function rewritePathImages(text: string): string {
   if (!MENTIONS_IMAGE.test(text)) return text
-  let paragraphs: Paragraph[]
+  let root: Root
   try {
-    paragraphs = []
-    collectParagraphs(parseBlocks(text), paragraphs)
+    root = parseBlocks(text)
   } catch {
     return text
   }
   const edits: Edit[] = []
-  for (const paragraph of paragraphs) {
-    for (const child of paragraph.children) {
-      if (child.type === 'inlineCode') inlineCodeEdit(text, child, edits)
-      else if (child.type === 'text') textEdits(text, child, edits)
-    }
+  try {
+    walkTree(root, text, true, edits)
+  } catch {
+    return text
   }
   if (edits.length === 0) return text
   edits.sort((a, b) => b.start - a.start)

@@ -89,6 +89,15 @@ export interface ChecklistSegment extends SegmentSource {
   readonly items: readonly ChecklistItem[]
 }
 
+/** A standalone image paragraph upgraded to the framed image card. */
+export interface ImageSegment extends SegmentSource {
+  readonly kind: 'image'
+  /** Authored destination exactly as written (local path or HTTP(S) URL). */
+  readonly url: string
+  /** Alt text as authored; the degradation display when the image cannot load. */
+  readonly alt: string
+}
+
 /** Discriminated union of every upgrade this renderer can emit. */
 export type UpgradeSegment =
   | NativeSegment
@@ -103,6 +112,7 @@ export type UpgradeSegment =
   | TabSegment
   | ChoicesSegment
   | MatplotlibSegment
+  | ImageSegment
 
 /** One stage of an explicit `timeline` fence. */
 export interface TimelineEntry {

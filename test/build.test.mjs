@@ -368,7 +368,7 @@ test('upgraded titles and table cells render their inline source through Markdow
   }
 })
 
-test('markdown image syntax keeps the local-path vocabulary in native and upgraded bodies', () => {
+test('markdown image syntax keeps the local-path vocabulary in native bodies; standalone images upgrade', () => {
   assert.equal(buildOnce().status, 0, 'the artifact is only judged from a successful build')
   const { react, jsxRuntime } = stubReact()
   const markdownTexts = []
@@ -393,8 +393,9 @@ test('markdown image syntax keeps the local-path vocabulary in native and upgrad
   }
   loaded.exports.apply(ctx)
   const View = registrations[0].component
-  // A card body carrying a local-path image, then a native paragraph with a
-  // remote image: both must reach MarkdownText with the pathImages resolver.
+  // A list-item image stays native (list bodies never split), a top-level
+  // image splits off into the image card, and the prose tail stays native:
+  // both native runs must reach MarkdownText with the pathImages resolver.
   const text = [
     '## 能力',
     '',
@@ -423,14 +424,16 @@ test('markdown image syntax keeps the local-path vocabulary in native and upgrad
     t: key => key,
   }, react)
   renderStub(element)
-  const cardBody = markdownTexts.find(props => props.text?.includes('![结果]'))
-  const nativePara = markdownTexts.find(props => props.text?.includes('![现场]'))
-  for (const found of [cardBody, nativePara]) {
-    assert.notEqual(found, undefined, `image-bearing text never reached MarkdownText: ${JSON.stringify(markdownTexts.map(p => p.text))}`)
+  const listBody = markdownTexts.find(props => props.text?.includes('![结果]'))
+  const tailPara = markdownTexts.find(props => props.text?.includes('第二段'))
+  for (const found of [listBody, tailPara]) {
+    assert.notEqual(found, undefined, `native text never reached MarkdownText: ${JSON.stringify(markdownTexts.map(p => p.text))}`)
     assert.equal(typeof found.pathImages?.resolve, 'function', 'pathImages vocabulary is missing')
   }
-  assert.equal(cardBody.pathImages.resolve('C:/tmp/out.png'), 'http://localhost/api/file?path=C%3A%2Ftmp%2Fout.png')
-  assert.equal(cardBody.pathImages.resolve('https://example.com/x.png'), undefined, 'remote URLs stay direct, not rewritten')
+  const upgradedAway = markdownTexts.find(props => props.text?.includes('![现场]'))
+  assert.equal(upgradedAway, undefined, 'a standalone body image now upgrades to the image card')
+  assert.equal(listBody.pathImages.resolve('C:/tmp/out.png'), 'http://localhost/api/file?path=C%3A%2Ftmp%2Fout.png')
+  assert.equal(listBody.pathImages.resolve('https://example.com/x.png'), undefined, 'remote URLs stay direct, not rewritten')
 })
 
 test('tab fence renders the tab bar and the first page only', () => {

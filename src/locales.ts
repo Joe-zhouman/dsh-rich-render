@@ -34,6 +34,11 @@ export const zh: Readonly<Record<string, string>> = {
   mplRunning: '正在执行…',
   mplFailed: '执行失败',
   mplDownloadPng: '下载 PNG',
+  // Image-card chrome.
+  imageCopy: '复制',
+  imageCopied: '已复制',
+  imageCopyFailed: '复制失败',
+  imagePreviewFailed: '图片无法预览',
   // Callout alert titles (GitHub alert flavors).
   calloutNote: '注意',
   calloutTip: '提示',
@@ -82,6 +87,11 @@ export const en: Readonly<Record<string, string>> = {
   mplRunning: 'Running…',
   mplFailed: 'Execution failed',
   mplDownloadPng: 'Download PNG',
+  // Image-card chrome.
+  imageCopy: 'Copy',
+  imageCopied: 'Copied',
+  imageCopyFailed: 'Copy failed',
+  imagePreviewFailed: 'Image preview unavailable',
   // Callout alert titles (GitHub alert flavors).
   calloutNote: 'Note',
   calloutTip: 'Tip',

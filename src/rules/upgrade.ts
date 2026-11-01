@@ -10,15 +10,15 @@
  * span simply does not match (the caller also wraps the whole call).
  */
 
-import type { BlockContent, Blockquote, Heading, List, ListItem, Paragraph, Table } from 'mdast'
+import type { BlockContent, Blockquote, Heading, Image, List, ListItem, Paragraph, Table } from 'mdast'
 import type { Root } from 'mdast'
 import { nodeSource, parseBlocks, plainText } from './parse.ts'
 import { CARD_TITLE_MAX, checklistEntry, stripInline } from './checklist-items.ts'
 import { decideChart } from './chart.ts'
 import type {
   CalloutSegment, CalloutType, CardSpec, CardsSegment, ChecklistItem, ChecklistSegment, ColumnAlign,
-  ChoicesSegment, MatplotlibSegment, MindmapSegment, StackSegment, TabSegment, TableSegment, TableSpec,
-  TimelineSegment, TreeSegment, UpgradeSegment,
+  ChoicesSegment, ImageSegment, MatplotlibSegment, MindmapSegment, StackSegment, TabSegment, TableSegment,
+  TableSpec, TimelineSegment, TreeSegment, UpgradeSegment,
 } from './segments.ts'
 import {
   parseChoicesFence, parseMindmapFence, parseStackFence, parseTabFence, parseTimelineFence, parseTodoFence,
@@ -335,6 +335,41 @@ function matchTable(text: string, nodes: readonly BlockContent[], i: number): Ru
   return { segment, start: firstIndex, consume: 1 }
 }
 
+/**
+ * One standalone image paragraph upgrades to the framed image card. The
+ * paragraph pass above fences body images off as their own paragraphs, so
+ * any image that sits alone (authored or rewritten) lands here; a paragraph
+ * mixing an image with prose stays native. Resolution is the view's concern:
+ * an undisplayable destination degrades inside the card.
+ */
+function matchImage(text: string, nodes: readonly BlockContent[], i: number): RuleMatch | undefined {
+  const paragraph = nodes[i]
+  if (paragraph?.type !== 'paragraph') return undefined
+  let image: Image | undefined
+  for (const child of paragraph.children) {
+    if (child.type === 'text') {
+      if (child.value.trim() !== '') return undefined
+      continue
+    }
+    if (child.type === 'image') {
+      if (image !== undefined) return undefined
+      image = child
+      continue
+    }
+    return undefined
+  }
+  if (image === undefined) return undefined
+  const paragraphSpan = span(text, i, nodes)
+  if (paragraphSpan.start === -1) return undefined
+  const segment: ImageSegment = {
+    kind: 'image',
+    source: text.slice(paragraphSpan.start, paragraphSpan.end),
+    url: image.url,
+    alt: image.alt ?? '',
+  }
+  return { segment, start: i, consume: 1 }
+}
+
 /** One rule match: the segment, where it starts, and how many nodes it consumed. */
 interface RuleMatch {
   readonly segment: UpgradeSegment
@@ -352,6 +387,7 @@ function matchAt(
   claimedUntil: number,
 ): RuleMatch | undefined {
   return tryMatch(() => matchFence(text, nodes, i))
+    ?? tryMatch(() => matchImage(text, nodes, i))
     ?? tryMatch(() => matchChecklist(text, nodes, i, claimedUntil))
     ?? tryMatch(() => matchCards(text, nodes, i))
     ?? tryMatch(() => matchTable(text, nodes, i))
