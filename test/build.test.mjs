@@ -508,6 +508,84 @@ test('tab fence renders the tab bar and the first page only', () => {
   assert.ok(!texts.some(t => t?.includes('For example')), 'inactive page stays unrendered')
 })
 
+test('mindmap renders bare nodes, a root pill, branch colors, and bump-edge hooks', () => {
+  assert.equal(buildOnce().status, 0, 'the artifact is only judged from a successful build')
+  const { react, jsxRuntime } = stubReact()
+  const { loaded, dom } = loadClient({
+    'react': react,
+    'react/jsx-runtime': jsxRuntime,
+    '@deepseek-ai/dsh-client-ui-primitives': PRIMITIVES,
+  })
+  const registrations = []
+  const ctx = {
+    slots: {
+      inject(name, factory) { factory() },
+      register(options, component) { registrations.push({ options, component }); return () => {} },
+    },
+    effect(factory) { factory(); return () => {} },
+    locale: { register: () => () => {} },
+    connection: { rpc: {} },
+    theme: { overrideTokens: () => () => {} },
+  }
+  loaded.exports.apply(ctx)
+  const View = registrations[0].component
+  const element = View({
+    node: {
+      kind: 'assistant-step',
+      data: {
+        status: 'settled',
+        turn: 1,
+        step: 1,
+        blocks: [{ kind: 'text', text: '```mindmap\n- 主题\n  - 分支 A\n    - 子项 A1\n  - 分支 B\n    - 子项 B1\n```\n' }],
+        time: 0,
+      },
+      location: { kind: 'turn', turn: { turn: 1, status: 'open' } },
+    },
+    useDisclosure: () => ({ expanded: false, setExpanded: () => {}, toggle: () => {} }),
+    useTurnData: () => undefined,
+    openFile: () => {},
+    renderMessageImages: () => null,
+    fileMentions: () => undefined,
+    t: key => key,
+  }, react)
+  const tree = renderStub(element)
+  // Nodes are bare text: the outlined-chip class is gone, the root is the
+  // only boxed node, and level tiers stay addressable per node.
+  const nodes = collectStub(tree, node =>
+    typeof node.type === 'string' && String(node.props?.className ?? '').includes('dshr-mm-node'))
+  assert.equal(nodes.length, 5, `expected root + 2 branches + 2 leaves, got ${nodes.length}`)
+  assert.equal(collectStub(tree, node => String(node.props?.className ?? '').includes('dshr-mm-chip')).length, 0,
+    'no node may carry the retired outlined-chip class')
+  assert.match(nodes[0].props.className, /(?:^| )dshr-mm-root(?: |$)/u, 'the first node is the root pill')
+  assert.match(nodes[1].props.className, /(?:^| )dshr-mm-level-1(?: |$)/u)
+  assert.match(nodes[2].props.className, /(?:^| )dshr-mm-level-2(?: |$)/u)
+  // Branch colors cycle over each root's level-1 wrappers only; deeper
+  // wrappers inherit the variable instead of reassigning it.
+  const topLevel = collectStub(tree, node =>
+    typeof node.type === 'string' && String(node.props?.className ?? '').includes('dshr-mm-child-l1'))
+  assert.equal(topLevel.length, 2)
+  assert.match(topLevel[0].props.className, /(?:^| )dshr-mm-b1(?: |$)/u)
+  assert.match(topLevel[1].props.className, /(?:^| )dshr-mm-b2(?: |$)/u)
+  const deeper = collectStub(tree, node =>
+    typeof node.type === 'string' && String(node.props?.className ?? '').includes('dshr-mm-child-l2'))
+  assert.equal(deeper.length, 2)
+  for (const wrapper of deeper) assert.doesNotMatch(wrapper.props.className, /dshr-mm-b\d/u)
+  // Every child wrapper opens with its edge hook, the element the curve
+  // pseudos and the fit pass both hang from.
+  for (const wrapper of [...topLevel, ...deeper]) {
+    assert.equal(wrapper.props.children[0]?.props?.className, 'dshr-mm-edge')
+    assert.equal(wrapper.props.children[0]?.props?.['aria-hidden'], true)
+  }
+  // The stylesheet carries the bump arcs, the palette, and the dark lift.
+  const style = dom.window.document.querySelector('style[data-plugin-css="dsh-rich-render/styles"]')
+  const sheet = style.textContent
+  assert.match(sheet, /\.dshr-mm-edge::before[\s\S]*?border-top-right-radius: 100% 100%/u)
+  assert.match(sheet, /\.dshr-mm-edge::after[\s\S]*?border-bottom-left-radius: 100% 100%/u)
+  assert.match(sheet, /\.dshr-mm-b1 \{ --dshr-mm-branch: #3b82f6; \}/u)
+  assert.match(sheet, /body\[data-ds-dark-theme\] \.dshr-mm-b1 \{ --dshr-mm-branch: #60a5fa; \}/u)
+  assert.match(sheet, /\.dshr-mm-root[\s\S]*?border-radius: 999px;/u)
+})
+
 test('prototype choices render radio options and a live showcase', () => {
   assert.equal(buildOnce().status, 0, 'the artifact is only judged from a successful build')
   const { react, jsxRuntime } = stubReact()

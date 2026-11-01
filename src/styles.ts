@@ -892,7 +892,10 @@ body[data-ds-dark-theme] .dshr-flow-body.dshr-flow-body :not(pre) > code {
   line-height: calc(20px + var(--dsh-content-font-delta-secondary, 0px));
 }
 
-/* ---- Mindmap fence (anyblock list2node idiom, multi-root) ---- */
+/* ---- Mindmap fence: bare-text nodes, branch-colored underlines, bump-curve
+   connectors (markmap-family look). The box budget decreases with depth: only
+   the root keeps a box (a solid pill); every deeper level is text anchored by
+   a colored underline. ---- */
 .dshr-mm {
   position: relative;
   padding: 12px;
@@ -921,77 +924,121 @@ body[data-ds-dark-theme] .dshr-flow-body.dshr-flow-body :not(pre) > code {
   align-items: center;
 }
 
-.dshr-mm-chip {
-  max-width: 220px;
-  padding: 4px 10px;
-  border: 1px solid var(--dsw-alias-border-l1);
-  border-radius: var(--dsw-radius-md, 8px);
-  background: var(--dsw-alias-bg-layer-1);
-  color: var(--dsw-alias-label-primary);
-  font-size: var(--dsh-content-font-size-secondary, 13px);
-  line-height: 18px;
+/* Level-2-and-deeper text node. The underline is a bottom background stripe
+   over 3px of padding, so descenders and inline-math subscripts never touch
+   it; it spans the whole block width when a label wraps at max-width. */
+.dshr-mm-node {
+  max-width: 240px;
+  padding: 0 0 3px;
+  background-image: linear-gradient(var(--dshr-mm-branch, transparent), var(--dshr-mm-branch, transparent));
+  background-repeat: no-repeat;
+  background-size: 100% 1.5px;
+  background-position: 0 100%;
+  font-size: 13px;
+  line-height: 19px;
+  font-weight: 400;
+  color: var(--dsw-alias-label-secondary);
   overflow-wrap: anywhere;
 }
 
-.dshr-mm-root {
-  font-weight: 600;
-  border-color: var(--dsw-alias-border-l3);
-  background: var(--dsw-alias-interactive-bg-hover);
-}
-
+/* Level-1 branch label: one size up, primary ink, heavier underline. */
 .dshr-mm-level-1 {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  color: var(--dsw-alias-label-primary);
+  background-size: 100% 2px;
+}
+
+/* The root keeps the only box: a solid pill in the primary label pair, the
+   same tokens the checklist selected state uses, so both themes follow. */
+.dshr-mm-root {
+  padding: 5px 16px;
+  border-radius: 999px;
+  background: var(--dsw-alias-label-primary);
+  color: var(--dsw-alias-label-primary-inverted);
+  font-size: 15px;
+  line-height: 22px;
   font-weight: 600;
 }
 
-/* Horizontal stub from a node to its children rail. */
-.dshr-mm-tail {
-  flex: none;
-  width: 14px;
-  height: 1px;
-  background: var(--dsw-alias-border-l2);
-}
+/* Branch palette: four hues cycling over each root's level-1 branches and
+   inherited by the whole subtree (underline and connectors). The platform has
+   no categorical-color token, so the values are plugin-owned, with a lifted
+   set for dark surfaces. */
+.dshr-mm-b1 { --dshr-mm-branch: #3b82f6; }
+.dshr-mm-b2 { --dshr-mm-branch: #0d9488; }
+.dshr-mm-b3 { --dshr-mm-branch: #d97706; }
+.dshr-mm-b4 { --dshr-mm-branch: #7c3aed; }
+
+body[data-ds-dark-theme] .dshr-mm-b1 { --dshr-mm-branch: #60a5fa; }
+body[data-ds-dark-theme] .dshr-mm-b2 { --dshr-mm-branch: #2dd4bf; }
+body[data-ds-dark-theme] .dshr-mm-b3 { --dshr-mm-branch: #fbbf24; }
+body[data-ds-dark-theme] .dshr-mm-b4 { --dshr-mm-branch: #a78bfa; }
 
 .dshr-mm-children {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
+/* The 40px left padding is the horizontal gap; the edge lives inside it. */
 .dshr-mm-child {
   position: relative;
-  padding-left: 14px;
+  padding-left: 40px;
 }
 
-/* Vertical rail segment linking siblings; halves at the first/last child. */
-.dshr-mm-child::before {
+/* One bump curve per child: two elliptical quarter-arcs meeting mid-gap with
+   a vertical tangent, endpoints horizontal — a pure-CSS approximation of
+   markmap's curveBumpX. The element spans the parent exit (column center,
+   where the edge box starts) to the child entry; the fit pass writes the
+   geometry variables after layout, and the unset fallback (top 50%, height 0)
+   leaves a plain horizontal stub. scaleY flips the pair when the child sits
+   above the parent. */
+.dshr-mm-edge {
+  position: absolute;
+  left: 0;
+  top: var(--dshr-mm-edge-top, 50%);
+  width: 40px;
+  height: var(--dshr-mm-edge-height, 0px);
+  transform: scaleY(var(--dshr-mm-edge-flip, 1));
+  pointer-events: none;
+}
+
+.dshr-mm-edge::before {
   content: '';
   position: absolute;
   left: 0;
   top: 0;
-  bottom: 0;
-  border-left: 1px solid var(--dsw-alias-border-l2);
+  width: 50%;
+  height: 50%;
+  border-top: 1.5px solid var(--dshr-mm-branch, var(--dsw-alias-border-l2));
+  border-right: 1.5px solid var(--dshr-mm-branch, var(--dsw-alias-border-l2));
+  border-top-right-radius: 100% 100%;
 }
 
-.dshr-mm-child:first-child::before {
-  top: 50%;
-}
-
-.dshr-mm-child:last-child::before {
-  bottom: 50%;
-}
-
-.dshr-mm-child:only-child::before {
-  display: none;
-}
-
-/* Horizontal stub from the rail into the child node. */
-.dshr-mm-child::after {
+.dshr-mm-edge::after {
   content: '';
   position: absolute;
-  left: 0;
-  top: 50%;
-  width: 14px;
-  border-top: 1px solid var(--dsw-alias-border-l2);
+  right: 0;
+  bottom: 0;
+  width: 50%;
+  height: 50%;
+  border-bottom: 1.5px solid var(--dshr-mm-branch, var(--dsw-alias-border-l2));
+  border-left: 1.5px solid var(--dshr-mm-branch, var(--dsw-alias-border-l2));
+  border-bottom-left-radius: 100% 100%;
+}
+
+/* Root-to-branch edges carry the heaviest stroke; deeper edges stay 1.5px. */
+.dshr-mm-child-l1 .dshr-mm-edge::before {
+  border-top-width: 2px;
+  border-right-width: 2px;
+}
+
+.dshr-mm-child-l1 .dshr-mm-edge::after {
+  border-bottom-width: 2px;
+  border-left-width: 2px;
 }
 
 .dshr-mm-zoom {
