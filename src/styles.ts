@@ -210,8 +210,10 @@ body[data-ds-dark-theme] .dshr-flow-body.dshr-flow-body :not(pre) > code {
 
 /* ---- Image card: a body image in the shared fence with a copy action ---- */
 /* The card wraps the picture instead of spanning the column, so a portrait
-   screenshot never sits in a wide empty frame. The picture keeps its column
-   width and is only capped for heights no message can reasonably carry. */
+   screenshot never sits in a wide empty frame. The picture keeps the column
+   width; the component then caps its height at 1.5x that width (A4 portrait
+   is 1.41), so only over-long pictures are scaled down. The height below is
+   the pre-measurement fallback. */
 .dshr-image {
   position: relative;
   box-sizing: border-box;

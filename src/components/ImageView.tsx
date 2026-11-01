@@ -6,7 +6,7 @@
  * destination resolves to nothing or the file fails to load.
  */
 
-import { memo, useCallback, useState } from 'react'
+import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import {
   IconCheckOutlineRegular, IconCopyOutlineRegular, IconWarningOutlineRegular, Tooltip,
 } from '@deepseek-ai/dsh-client-ui-primitives'
@@ -51,6 +51,13 @@ async function pngBlob(url: string): Promise<Blob | null> {
 /** Copy feedback: idle label, success, or the failure label until the next try. */
 type CopyState = 'idle' | 'done' | 'error'
 
+/**
+ * Tallest display ratio (height / width) an image may use before it counts as
+ * over-long and gets scaled down. A4 portrait is 297/210 ≈ 1.41, so 1.5 leaves
+ * a full A4 page and a little more at the column width.
+ */
+const ASPECT_CAP = 1.5
+
 /** One image card with its fence chrome, copy action, and failure display. */
 export const ImageView = memo(function ImageView({ segment, chrome }: {
   segment: ImageSegment
@@ -58,7 +65,25 @@ export const ImageView = memo(function ImageView({ segment, chrome }: {
 }) {
   const [failed, setFailed] = useState(false)
   const [copyState, setCopyState] = useState<CopyState>('idle')
+  const [heightCap, setHeightCap] = useState<number>()
+  const cardRef = useRef<HTMLDivElement | null>(null)
   const url = displayableUrl(segment.url)
+  // The cap follows the column the card sits in, so an A4-ratio picture keeps
+  // the full width at any window size; only taller pictures shrink. Measuring
+  // the column (not the card) avoids a size that depends on its own result.
+  useEffect(() => {
+    const column = cardRef.current?.parentElement
+    if (column === null || column === undefined) return
+    const fit = (): void => {
+      const width = column.clientWidth
+      if (width > 0) setHeightCap(Math.round(width * ASPECT_CAP))
+    }
+    fit()
+    if (typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(fit)
+    observer.observe(column)
+    return () => { observer.disconnect() }
+  }, [])
   const copy = useCallback((): void => {
     if (url === undefined) return
     void (async () => {
@@ -85,8 +110,9 @@ export const ImageView = memo(function ImageView({ segment, chrome }: {
     ? chrome.copied
     : copyState === 'error' ? chrome.copyFailed : chrome.copy
   return (
-    <div className="dshr-fence dshr-image">
+    <div ref={cardRef} className="dshr-fence dshr-image">
       <img className="dshr-image-img" src={url} alt={segment.alt}
+        style={heightCap === undefined ? undefined : { maxHeight: `${heightCap}px` }}
         onError={() => { setFailed(true) }} loading="lazy" decoding="async" referrerPolicy="no-referrer" />
       <Tooltip label={label} side="top" align="end" portal>
         <button type="button" className="dshr-image-copy" aria-label={label}
