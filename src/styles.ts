@@ -983,62 +983,38 @@ body[data-ds-dark-theme] .dshr-mm-b4 { --dshr-mm-branch: #a78bfa; }
   gap: 6px;
 }
 
-/* The 40px left padding is the horizontal gap; the edge lives inside it. */
+/* The 40px left padding is the horizontal gap; the connector lives inside it. */
 .dshr-mm-child {
   position: relative;
   padding-left: 40px;
 }
 
-/* One bump curve per child: two elliptical quarter-arcs meeting mid-gap with
-   a vertical tangent, endpoints horizontal — a pure-CSS approximation of
-   markmap's curveBumpX. The element spans the parent exit (column center,
-   where the edge box starts) to the child entry; the fit pass writes the
-   geometry variables after layout, and the unset fallback (top 50%, height 0)
-   leaves a plain horizontal stub. scaleY flips the pair when the child sits
-   above the parent. */
+/* One connector per child: an inline SVG whose path is written after layout by
+   the fit pass, from the parent exit (the children column's centerline) to the
+   child's center. Each SVG box spans just the curve's vertical extent; overflow
+   stays visible so the stroke's round caps reach past the box edges into the
+   nodes. Before the fit runs the path carries no path data and paints nothing,
+   so a missing measurement never shows a half-drawn line. */
 .dshr-mm-edge {
   position: absolute;
   left: 0;
-  top: var(--dshr-mm-edge-top, 50%);
+  display: block;
   width: 40px;
-  height: var(--dshr-mm-edge-height, 0px);
-  transform: scaleY(var(--dshr-mm-edge-flip, 1));
+  overflow: visible;
   pointer-events: none;
 }
 
-.dshr-mm-edge::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 50%;
-  height: 50%;
-  border-top: 1.5px solid var(--dshr-mm-branch, var(--dsw-alias-border-l2));
-  border-right: 1.5px solid var(--dshr-mm-branch, var(--dsw-alias-border-l2));
-  border-top-right-radius: 100% 100%;
+.dshr-mm-edge-path {
+  fill: none;
+  stroke: var(--dshr-mm-branch, var(--dsw-alias-border-l2));
+  stroke-width: 1.5px;
+  stroke-linecap: round;
 }
 
-.dshr-mm-edge::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 50%;
-  height: 50%;
-  border-bottom: 1.5px solid var(--dshr-mm-branch, var(--dsw-alias-border-l2));
-  border-left: 1.5px solid var(--dshr-mm-branch, var(--dsw-alias-border-l2));
-  border-bottom-left-radius: 100% 100%;
-}
-
-/* Root-to-branch edges carry the heaviest stroke; deeper edges stay 1.5px. */
-.dshr-mm-child-l1 .dshr-mm-edge::before {
-  border-top-width: 2px;
-  border-right-width: 2px;
-}
-
-.dshr-mm-child-l1 .dshr-mm-edge::after {
-  border-bottom-width: 2px;
-  border-left-width: 2px;
+/* Root-to-branch connectors carry the heaviest stroke; deeper ones stay 1.5px.
+   The direct-child selector keeps nested levels at the lighter width. */
+.dshr-mm-child-l1 > .dshr-mm-edge .dshr-mm-edge-path {
+  stroke-width: 2px;
 }
 
 .dshr-mm-zoom {

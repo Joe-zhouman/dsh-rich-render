@@ -570,17 +570,23 @@ test('mindmap renders bare nodes, a root pill, branch colors, and bump-edge hook
     typeof node.type === 'string' && String(node.props?.className ?? '').includes('dshr-mm-child-l2'))
   assert.equal(deeper.length, 2)
   for (const wrapper of deeper) assert.doesNotMatch(wrapper.props.className, /dshr-mm-b\d/u)
-  // Every child wrapper opens with its edge hook, the element the curve
-  // pseudos and the fit pass both hang from.
+  // Every child wrapper opens with its connector: an inline SVG whose path the
+  // fit pass writes, so the curve is one continuous stroke instead of two
+  // half-arcs that could drift apart at the seam.
   for (const wrapper of [...topLevel, ...deeper]) {
-    assert.equal(wrapper.props.children[0]?.props?.className, 'dshr-mm-edge')
-    assert.equal(wrapper.props.children[0]?.props?.['aria-hidden'], true)
+    const edge = wrapper.props.children[0]
+    assert.equal(edge?.type, 'svg')
+    assert.equal(edge.props.className, 'dshr-mm-edge')
+    assert.equal(edge.props['aria-hidden'], 'true')
+    assert.equal(edge.props.children?.props?.className, 'dshr-mm-edge-path')
   }
-  // The stylesheet carries the bump arcs, the palette, and the dark lift.
+  // The stylesheet carries the connector stroke and the palette, and no
+  // pseudo-element half-arcs survive.
   const style = dom.window.document.querySelector('style[data-plugin-css="dsh-rich-render/styles"]')
   const sheet = style.textContent
-  assert.match(sheet, /\.dshr-mm-edge::before[\s\S]*?border-top-right-radius: 100% 100%/u)
-  assert.match(sheet, /\.dshr-mm-edge::after[\s\S]*?border-bottom-left-radius: 100% 100%/u)
+  assert.match(sheet, /\.dshr-mm-edge-path \{[\s\S]*?fill: none;[\s\S]*?stroke-width: 1\.5px;/u)
+  assert.match(sheet, /\.dshr-mm-child-l1 > \.dshr-mm-edge \.dshr-mm-edge-path \{[\s\S]*?stroke-width: 2px;/u)
+  assert.doesNotMatch(sheet, /\.dshr-mm-edge::(?:before|after)/u)
   assert.match(sheet, /\.dshr-mm-b1 \{ --dshr-mm-branch: #3b82f6; \}/u)
   assert.match(sheet, /body\[data-ds-dark-theme\] \.dshr-mm-b1 \{ --dshr-mm-branch: #60a5fa; \}/u)
   assert.match(sheet, /\.dshr-mm-root[\s\S]*?border-radius: 999px;/u)
