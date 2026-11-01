@@ -738,11 +738,11 @@ test('a task list renders as a checklist with marker state and live progress', (
   }, react)
   const tree = renderStub(element)
 
-  const boxes = collectStub(tree, node => node.type === 'button' && node.props?.role === 'checkbox')
-  assert.equal(boxes.length, 3, 'one checkbox per task item')
-  assert.deepEqual(boxes.map(node => node.props['aria-checked']), [true, false, false])
+  const boxes = collectStub(tree, node => node.type === 'input' && node.props?.type === 'checkbox')
+  assert.equal(boxes.length, 3, 'one native checkbox per task item')
+  assert.deepEqual(boxes.map(node => node.props.checked), [true, false, false])
   assert.deepEqual(boxes.map(node => node.props['aria-label']), ['第一项', '第二项', '第三项'])
-  assert.equal(typeof boxes[0]?.props.onClick, 'function', 'each box is interactive')
+  assert.equal(typeof boxes[0]?.props.onChange, 'function', 'each box is interactive')
 
   const bar = collectStub(tree, node => node.props?.role === 'progressbar')[0]
   assert.equal(bar?.props['aria-valuenow'], 1)

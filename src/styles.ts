@@ -374,33 +374,29 @@ export const STYLESHEET = `
   min-width: 0;
 }
 
+/* The platform's checkbox recipe (ui-primitives Checkbox): a native input at
+   16px tinted with the brand accent, centred in a 24px hit area so the box
+   stays on the title's first line without a drawn glyph. */
 .dshr-checklist-check {
   flex: none;
-  box-sizing: border-box;
   display: grid;
   place-items: center;
+  box-sizing: border-box;
   width: 24px;
-  height: 24px;
+  height: 22px;
   margin: 0;
-  padding: 0;
-  border: 1.5px solid var(--dsw-alias-border-l3);
-  border-radius: 50%;
-  background: transparent;
-  color: var(--dsw-alias-label-primary-inverted);
   cursor: pointer;
-  transition: background 120ms ease, border-color 120ms ease;
 }
 
-.dshr-checklist-check:hover {
-  border-color: var(--dsw-alias-label-secondary);
+.dshr-checklist-input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--dsw-alias-brand-primary);
+  cursor: inherit;
 }
 
-.dshr-checklist-check[aria-checked='true'] {
-  background: var(--dsw-alias-label-primary);
-  border-color: var(--dsw-alias-label-primary);
-}
-
-.dshr-checklist-check:focus-visible {
+.dshr-checklist-input:focus-visible {
   outline: 2px solid var(--dsw-alias-link);
   outline-offset: 2px;
 }
@@ -425,8 +421,7 @@ export const STYLESHEET = `
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dshr-checklist-fill,
-  .dshr-checklist-check {
+  .dshr-checklist-fill {
     transition: none;
   }
 }

@@ -1,7 +1,9 @@
 /**
- * Checklist: a flat GFM task list drawn as one bordered card. The checked
- * state starts from the markdown markers and then lives in component state,
- * so clicking a box moves the count and the progress bar immediately without
+ * Checklist: a flat GFM task list drawn as one bordered card. Each item's box
+ * is a native checkbox — the same control the platform's Checkbox primitive
+ * uses — so the browser draws the tick and the focus ring. The checked state
+ * starts from the markdown markers and then lives in component state, so
+ * clicking a box moves the count and the progress bar immediately without
  * touching the transcript or the session log.
  */
 
@@ -12,21 +14,6 @@ import type { ChecklistSegment } from '../rules/segments.ts'
 import { strictLines } from '../rules/strict-lines.ts'
 import { pathImages } from '../markdown-fallback.ts'
 import { InlineMarkdown } from './InlineMarkdown.tsx'
-
-/** Checkmark glyph inside a checked box. */
-function CheckGlyph() {
-  return (
-    <svg width={14} height={14} viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M5 12.5 9.2 16.7 19 7"
-        stroke="currentColor"
-        strokeWidth={3}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
 
 export interface ChecklistViewProps {
   readonly segment: ChecklistSegment
@@ -68,16 +55,15 @@ export function ChecklistView({ segment, labels, chrome }: ChecklistViewProps) {
       <ul className="dshr-checklist-items">
         {segment.items.map((item, index) => (
           <li key={index} className="dshr-checklist-item">
-            <button
-              type="button"
-              role="checkbox"
-              aria-checked={checked[index] === true}
-              aria-label={item.title}
-              className="dshr-checklist-check"
-              onClick={() => { toggle(index) }}
-            >
-              {checked[index] === true && <CheckGlyph />}
-            </button>
+            <label className="dshr-checklist-check">
+              <input
+                type="checkbox"
+                className="dshr-checklist-input"
+                checked={checked[index] === true}
+                aria-label={item.title}
+                onChange={() => { toggle(index) }}
+              />
+            </label>
             <div className="dshr-checklist-main">
               <div className="dshr-checklist-item-title"><InlineMarkdown text={item.title} labels={labels} /></div>
               {item.body !== '' && (
