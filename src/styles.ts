@@ -1078,6 +1078,7 @@ body[data-ds-dark-theme] .dshr-stack-box {
 
 .dshr-mpl-tabs {
   display: flex;
+  justify-content: flex-end;
   gap: 4px;
   margin-bottom: 8px;
 }
@@ -1090,6 +1091,17 @@ body[data-ds-dark-theme] .dshr-stack-box {
   padding: 2px 10px;
   font-size: 12px;
   cursor: pointer;
+}
+
+.dshr-mpl-tab:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+/* Export is an action beside the view tabs, not a fourth view. */
+.dshr-mpl-tab-action {
+  margin-left: 4px;
+  color: var(--dsw-alias-link);
 }
 
 .dshr-mpl-tab.active {
@@ -1125,16 +1137,6 @@ body[data-ds-dark-theme] .dshr-stack-box {
   padding: 8px;
   max-height: 240px;
   overflow: auto;
-}
-
-.dshr-mpl-dl {
-  display: inline-block;
-  border: 1px solid var(--dsw-alias-border-l1);
-  border-radius: 6px;
-  padding: 4px 12px;
-  font-size: 13px;
-  color: var(--dsw-alias-label-primary);
-  text-decoration: none;
 }
 
 /* ---- Inline markdown fields (titles, table cells, node labels) ----

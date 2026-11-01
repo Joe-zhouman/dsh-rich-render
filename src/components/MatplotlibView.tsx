@@ -25,7 +25,7 @@ export interface MatplotlibViewProps {
 export function MatplotlibView({ segment, labels, chrome }: MatplotlibViewProps) {
   const [phase, setPhase] = useState<Phase>('probe')
   const [result, setResult] = useState<MatplotlibRunResult>()
-  const [tab, setTab] = useState<'code' | 'chart' | 'download'>('chart')
+  const [tab, setTab] = useState<'code' | 'chart'>('chart')
   useEffect(() => {
     let alive = true
     matplotlibStatus().then(status => {
@@ -52,12 +52,19 @@ export function MatplotlibView({ segment, labels, chrome }: MatplotlibViewProps)
     return <MarkdownText text={segment.source} labels={labels} />
   }
   const image = result?.status === 'success' ? `data:image/png;base64,${result.image}` : undefined
+  const download = (): void => {
+    if (image === undefined) return
+    const anchor = document.createElement('a')
+    anchor.href = image
+    anchor.download = 'matplotlib.png'
+    anchor.click()
+  }
   return (
     <div className="dshr-mpl dshr-fence">
       <div className="dshr-mpl-tabs" role="tablist">
         <button type="button" role="tab" aria-selected={tab === 'code'} className={tab === 'code' ? 'dshr-mpl-tab active' : 'dshr-mpl-tab'} onClick={() => setTab('code')}>{chrome.mplCode}</button>
         <button type="button" role="tab" aria-selected={tab === 'chart'} className={tab === 'chart' ? 'dshr-mpl-tab active' : 'dshr-mpl-tab'} onClick={() => setTab('chart')}>{chrome.mplChart}</button>
-        <button type="button" role="tab" aria-selected={tab === 'download'} className={tab === 'download' ? 'dshr-mpl-tab active' : 'dshr-mpl-tab'} onClick={() => setTab('download')}>{chrome.mplDownload}</button>
+        <button type="button" className="dshr-mpl-tab dshr-mpl-tab-action" disabled={image === undefined} onClick={download}>{chrome.mplDownload}</button>
       </div>
       {tab === 'code' && <MarkdownText text={segment.source} labels={labels} />}
       {tab === 'chart' && (
@@ -75,13 +82,6 @@ export function MatplotlibView({ segment, labels, chrome }: MatplotlibViewProps)
               {result?.status === 'error' && <pre className="dshr-mpl-stderr">{result.message}</pre>}
             </div>
           )
-      )}
-      {tab === 'download' && (
-        <div className="dshr-mpl-chart">
-          {image !== undefined
-            ? <a className="dshr-mpl-dl" href={image} download="matplotlib.png">{chrome.mplDownloadPng}</a>
-            : <span className="dshr-mpl-note">{phase === 'running' ? chrome.mplRunning : chrome.mplFailed}</span>}
-        </div>
       )}
     </div>
   )
