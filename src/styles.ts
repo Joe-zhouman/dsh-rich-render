@@ -575,7 +575,7 @@ export const STYLESHEET = `
   min-width: 0;
 }
 
-/* ---- Prototype choices: chip row over a live showcase panel ---- */
+/* ---- Prototype choices: native radio options over a live showcase panel ---- */
 .dshr-choices {
   display: flex;
   flex-direction: column;
@@ -585,58 +585,58 @@ export const STYLESHEET = `
 
 .dshr-choices-list {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  flex-direction: column;
+  gap: 2px;
 }
 
-/* The chip's fill carries the selection — hover gray at rest, the primary
-   label color when chosen — so the row needs no radio glyph. */
 .dshr-choices-option {
-  flex: 0 1 auto;
-  max-width: 100%;
-  padding: 4px 12px;
-  border: none;
-  border-radius: var(--dsw-radius-md, 12px);
-  background: var(--dsw-alias-interactive-bg-hover);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: var(--dsw-radius-sm, 6px);
   color: var(--dsw-alias-label-secondary);
-  font: inherit;
   font-size: var(--dsh-content-font-size-secondary, 13px);
   line-height: 20px;
-  font-weight: 400;
-  text-align: start;
-  overflow-wrap: anywhere;
   cursor: pointer;
-  transition: background-color 120ms ease, color 120ms ease;
 }
 
 .dshr-choices-option:hover {
-  background: var(--dsw-alias-interactive-bg-hover-accent);
-  color: var(--dsw-alias-label-primary);
+  background: var(--dsw-alias-interactive-bg-hover);
 }
 
 .dshr-choices-option[data-active] {
-  background: var(--dsw-alias-label-primary);
-  color: var(--dsw-alias-label-primary-inverted);
-  font-weight: 500;
+  color: var(--dsw-alias-label-primary);
+  font-weight: 600;
 }
 
-.dshr-choices-option[data-active]:hover {
-  background: var(--dsw-alias-label-primary-dimmed);
+/* The platform's radio recipe (Checkbox / plugin manager): a native input at
+   16px tinted with the brand accent. The browser draws the ring, the centred
+   dot, and the focus ring, so no glyph is positioned by hand. */
+.dshr-choices-input {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--dsw-alias-brand-primary);
+  cursor: inherit;
 }
 
-.dshr-choices-option:focus-visible {
+.dshr-choices-input:focus-visible {
   outline: 2px solid var(--dsw-alias-link);
   outline-offset: 2px;
 }
 
-.dshr-choices-panel {
+.dshr-choices-label {
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .dshr-choices-option {
-    transition: none;
-  }
+.dshr-choices-panel {
+  border: 1px solid var(--dsw-alias-border-l1);
+  border-radius: var(--dsw-radius-md, 8px);
+  padding: 12px 16px;
+  overflow-x: auto;
 }
 
 /* ---- Charts ---- */

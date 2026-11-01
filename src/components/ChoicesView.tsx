@@ -1,12 +1,15 @@
 /**
- * Prototype choices: the explicit `prototype-choices` fence as a row of
- * selectable chips over a live showcase panel. The selected option's body
- * renders through the full upgrade pipeline, so a prototype can be a live
- * rich fence, a code block, or plain prose. Selection is component-local
- * state (first option by default) and never writes back to the session.
+ * Prototype choices: the explicit `prototype-choices` fence as a vertical
+ * radio list over a showcase panel. Each option is a native radio input — the
+ * same control the platform's Checkbox and plugin manager use — so the group
+ * keeps the browser's keyboard behavior, focus ring, and accent color instead
+ * of a drawn glyph. The selected option's body renders through the full
+ * upgrade pipeline, so a prototype can be a live rich fence, a code block, or
+ * plain prose. Selection is component-local state (first option by default)
+ * and never writes back to the session.
  */
 
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import type { MarkdownLabels } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ChoicesSegment } from '../rules/segments.ts'
 import { strictLines } from '../rules/strict-lines.ts'
@@ -23,9 +26,10 @@ export interface ChoicesViewProps {
   readonly chrome: RichChrome
 }
 
-/** Draw the selectable chip row and the selected option's showcase panel. */
+/** Draw the radio option list and the selected option's showcase panel. */
 export function ChoicesView({ segment, labels, mentions, chrome }: ChoicesViewProps) {
   const [active, setActive] = useState(0)
+  const group = useId()
   const index = Math.min(active, segment.choices.length - 1)
   const current = segment.choices[index]
   return (
@@ -33,19 +37,22 @@ export function ChoicesView({ segment, labels, mentions, chrome }: ChoicesViewPr
       {segment.title !== '' && (
         <div className="dshr-cards-title"><InlineMarkdown text={segment.title} labels={labels} /></div>
       )}
-      <div className="dshr-choices-list" role="radiogroup">
+      <div className="dshr-choices-list">
         {segment.choices.map((choice, choiceIndex) => (
-          <button
+          <label
             key={choiceIndex}
-            type="button"
-            role="radio"
-            aria-checked={choiceIndex === index}
             className="dshr-choices-option"
             data-active={choiceIndex === index || undefined}
-            onClick={() => { setActive(choiceIndex) }}
           >
-            {choice.label}
-          </button>
+            <input
+              type="radio"
+              className="dshr-choices-input"
+              name={group}
+              checked={choiceIndex === index}
+              onChange={() => { setActive(choiceIndex) }}
+            />
+            <span className="dshr-choices-label">{choice.label}</span>
+          </label>
         ))}
       </div>
       <div className="dshr-choices-panel">

@@ -79,6 +79,7 @@ function stubReact() {
     useLayoutEffect: () => {},
     useMemo: factory => factory(),
     useRef: value => ({ current: value }),
+    useId: () => 'r0',
     useState: initial => [typeof initial === 'function' ? initial() : initial, () => {}],
   }
   return {
@@ -538,8 +539,13 @@ test('prototype choices render radio options and a live showcase', () => {
   const tree = renderStub(element)
   const options = collectStub(tree, node =>
     typeof node.type === 'string' && String(node.props?.className ?? '').includes('dshr-choices-option'))
-  assert.deepEqual(options.map(node => node.props.children), ['方案一', '方案二'])
+  assert.deepEqual(options.map(node => node.props.children[1]?.props?.children), ['方案一', '方案二'])
   assert.equal(options.filter(node => node.props['data-active'] !== undefined).length, 1)
+  // Options are native radio inputs sharing one name, so the group keeps the
+  // browser's own keyboard and focus behavior.
+  const inputs = options.map(node => node.props.children[0]?.props)
+  assert.ok(inputs.every(input => input?.type === 'radio'), 'every option is a native radio')
+  assert.equal(new Set(inputs.map(input => input?.name)).size, 1, 'one native radio group')
   // The selected showcase renders its inner stack fence as a real component.
   assert.ok(collectStub(tree, node =>
     String(node.props?.className ?? '').includes('dshr-stack-box')).length > 0,
