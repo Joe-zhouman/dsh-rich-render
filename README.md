@@ -9,7 +9,7 @@
 | 项 | 值 |
 |---|---|
 | 包名 | `dsh-rich-render` |
-| 版本 | `0.9.20`（`private`，不发布） |
+| 版本 | `0.9.21`（`private`，不发布） |
 | 类型 | host + client bundle（`dsh.client.platform: web`，自带 `dsh.bundle.patch`） |
 | 宿主半区入口 | `lib/index.js`（由 `index.mjs` 构建；预构建产物随仓库提交） |
 | 浏览器半区入口 | `lib/client.js`（CJS factory，预构建产物随仓库提交） |
@@ -136,10 +136,10 @@ v2 已上线：行数 2~550（实现容差）、纯数字正则（含科学计�
 
 ## mindmap / stack / tree / todo / timeline / tab / prototype-choices 决策（2026-10-24 已实现并实机验收；timeline 2026-10-25；tab 2026-10-26；prototype-choices 2026-10-26）
 
-### 围栏统一外框（v0.9.5）
+### 围栏统一外框（v0.9.5，v0.9.21 起改为无框）
 
-- 所有显式围栏（mindmap / stack / tree / todo / timeline / tab / prototype-choices / matplotlib）根节点共用 `.dshr-fence`：1px `border-l2` + 10px 圆角，即 stack 原先那个不明显的整体轮廓。
-- 各组件保留自己的内边距与内部结构；原先自带的 `border-l1` 边框与 8–12px 圆角移除，改由共享类统一。mindmap 的内层滚动框边框并入外框；timeline / tab / prototype-choices 补内边距，避免内容贴边。
+- v0.9.5 曾让所有显式围栏（mindmap / stack / tree / todo / timeline / tab / prototype-choices / matplotlib）根节点共用 `.dshr-fence`：1px `border-l2` + 10px 圆角。
+- v0.9.21 起按用户偏好去掉这层外框：`.dshr-fence` 只保留类名作钩子（`border: 0`），围栏靠各自的内边距与内部结构成形，不再画一圈包围盒；图片卡、清单、图表工具条等随之变为无框。
 
 ### 围栏正文换行（v0.9.6）
 
@@ -161,6 +161,7 @@ v2 已上线：行数 2~550（实现容差）、纯数字正则（含科学计�
 
   实际组件沿用现有括号连接线；预览只表达方向和层级。
 
+- 视觉（v0.9.21）：无外框、无节点胶囊——节点就是纯文字，层级只靠字号/字重（根 14px/600 主色、一级 13px/500 主色、更深层级 13px 次级色）与 1px 细引导线；缩放控件也改成右上角的无框文字按钮（`−` / `100%` / `+`）。
 - 横向 scrollbar + 缩放控件（`−` / `100%` / `+`，范围 50%~200%）；缩放是组件本地状态，不写回会话。
 - 节点上限 200（总数）；不设最小条目数（至少根 + 1 子节点）。超限、解析失败或内容不是列表时，把围栏内容按普通 Markdown 渲染（列表就显示为 list），静默；插件未启用时仍是代码块。
 - 现有自动 mindmap 升格规则退役：普通嵌套 list 不再自动变 mindmap，只有显式 `mindmap` fence 才渲染。
@@ -282,6 +283,9 @@ spec 设想独立 channel `/rich-render`。实际：自定义 channel 的 `rpc.h
 
 persona.md 措辞修订（用户编辑，无代码改动，测试 108/108 仍绿）：富渲染总则改为「解释论证默认连贯段落」，收紧原生无序列表与有序列表的使用条件；stack 用途扩展为「同一阶段内多个方向或方案的分组说明」并写明与多级列表的取舍（回应上面"stack 未被自发使用"观察项）；「选择」节从条目列表改为连贯段落。persona 为运行时资产，宿主启动时一次性读入。desktop profile 已 remove+add 刷新至 0.2.1（运行中的桌面端重启后生效）；web profile 仍装 0.2.0（persona 为旧版），需要时同法刷新。
 
+## 修订记录（2026-11-01，v0.9.21）
+
+用户要求 mindmap 换成好看的极简样式，并说明整体偏好「无外框线」。两件事一起做：1) `.dshr-fence` 不再画边框（`border: 0`、`border-radius: 0`，类名保留作钩子），所有显式围栏变成无框排布，靠各自内边距与内部结构成形；2) mindmap 从「每个节点一个描边胶囊 + 外层边框」改为**无框轮廓树**——节点只剩文字，层级由字号与字重区分（根 14px/600 主色、一级 13px/500 主色、更深 13px 次级色），连接线保持 1px 细引导线（尾段与 sibling 竖轨由 14px 收到 12px，间距 6→4px），缩放控件从带框按钮改为右上角无框文字按钮（22px 高、`radius-sm`、hover 才有底、`:focus-visible` 2px `link` 描边）。`styles.ts` 的 `.dshr-mm-*` 全部重写；组件结构、多根渲染、缩放范围都没动。160 项测试全绿。两 profile 已刷，桌面端重启生效。
 ## 修订记录（2026-11-01，v0.9.20）
 
 用户要求 matplotlib 的代码页按 Python 渲染。原来代码页把 `segment.source`（整段围栏文本）交给 `MarkdownText`，语言标成 `matplotlib`、没有对应文法，于是只有一块无高亮的纯文本。现在改为平台的 `CodeBlock`：`code={segment.code}`（围栏内的 Python 源码）、`lang="python"`、`streaming={false}`，标签直接用 `labels.code`（`copyLabel` / `copiedLabel` / `toolbarLabels`），因此拿到 shiki 语法高亮、语言标题、复制与换行动作，和正文里的 python 代码块完全同款。功能关闭或环境不可用时仍按原围栏文本退化（`MarkdownText`）。`build.test.mjs` 的 primitives 桩补了 `CodeBlock`。160 项测试全绿。两 profile 已刷，桌面端重启生效。
