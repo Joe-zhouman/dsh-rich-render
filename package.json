@@ -1,6 +1,6 @@
 {
   "name": "dsh-rich-render",
-  "version": "0.9.29",
+  "version": "0.9.30",
   "private": true,
   "type": "module",
   "main": "./lib/index.js",

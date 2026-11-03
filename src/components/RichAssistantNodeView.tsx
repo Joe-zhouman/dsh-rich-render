@@ -17,7 +17,6 @@ import type { ReactNode } from 'react'
 import { JsonBlock } from '@deepseek-ai/dsh-client-ui-primitives'
 import { ReasoningRow } from './ReasoningRow.tsx'
 import { RichMarkdownText } from './RichMarkdownText.tsx'
-import { sendChoice } from '../choice-send.ts'
 import { markdownLabels } from '../markdown-fallback.ts'
 import { useSearchableHidden } from '../use-searchable-hidden.ts'
 import type { RichAssistantNodeViewProps } from '../chat-contract.ts'
@@ -26,7 +25,7 @@ const NOOP = (): void => {}
 
 /** Streaming, settled, and interrupted Assistant states share one renderer. */
 export const RichAssistantNodeView = memo(function RichAssistantNodeView({
-  sessionId, node, groupPart, useDisclosure, useTurnData, turnProcess, openFile, renderMessageImages, fileMentions, t,
+  useInput, inputActions, node, groupPart, useDisclosure, useTurnData, turnProcess, openFile, renderMessageImages, fileMentions, t,
 }: RichAssistantNodeViewProps) {
   const data = node.data
   const turn = node.location.kind === 'turn' || node.location.kind === 'step'
@@ -76,17 +75,17 @@ export const RichAssistantNodeView = memo(function RichAssistantNodeView({
       warning: t('calloutWarning'),
       caution: t('calloutCaution'),
     },
-    choicesSend: t('choicesSend'),
-    choicesSending: t('choicesSending'),
-    choicesSent: t('choicesSent'),
-    choicesSendFailed: t('choicesSendFailed'),
+    choicesFilled: t('choicesFilled'),
+    choicesFillFailed: t('choicesFillFailed'),
     choicesAnswerPrefix: t('choicesAnswerPrefix'),
   }), [t])
-  // A fence commits its selection through the Session the seat supplies; a
-  // renderer without one (no Session seat) keeps the choice preview-only.
-  const choiceSend = useMemo(
-    () => sessionId === undefined ? undefined : (text: string) => sendChoice(sessionId, text),
-    [sessionId],
+  // A fence writes its selection into the Session composer; a seat without the
+  // input face keeps the choice preview-only.
+  const choiceInput = useMemo(
+    () => useInput === undefined || inputActions === undefined
+      ? undefined
+      : { useDraft: useInput, actions: inputActions },
+    [inputActions, useInput],
   )
   const streaming = data.status === 'running'
   const interrupted = data.status === 'interrupted'
@@ -114,7 +113,7 @@ export const RichAssistantNodeView = memo(function RichAssistantNodeView({
             labels={labels}
             mentions={mentions}
             chrome={chrome}
-            choiceSend={choiceSend}
+            choiceInput={choiceInput}
           />,
         )
         break

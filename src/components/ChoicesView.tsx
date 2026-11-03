@@ -7,16 +7,17 @@
  * upgrade pipeline, so a prototype can be a live rich fence, a code block, or
  * plain prose.
  *
- * Selecting an option previews it only. The commit row sends the selected
- * label into the Session as one user turn through the seat's sender, so the
- * choice enters the next round instead of staying on screen; a fence without
- * a Session seat (no sender) stays preview-only.
+ * Choosing an option previews it and writes one `已选择：<选项名>` line above
+ * whatever the draft already holds; the fence never sends. The user adds their
+ * own supplement and sends the message themselves, so a decision always leaves
+ * room for instructions that only they know.
  */
 
-import { useCallback, useId, useState } from 'react'
+import { useCallback, useId, useRef, useState } from 'react'
 import type { MarkdownLabels } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ChoicesSegment } from '../rules/segments.ts'
-import type { ChoiceSend } from '../choice-send.ts'
+import { writeChoiceDraft } from '../choice-fill.ts'
+import type { ChoiceDraftState, ChoiceInput, UseChoiceDraft } from '../choice-fill.ts'
 import { strictLines } from '../rules/strict-lines.ts'
 import type { Mentions } from '../markdown-fallback.ts'
 import { InlineMarkdown } from './InlineMarkdown.tsx'
@@ -29,34 +30,46 @@ export interface ChoicesViewProps {
   readonly mentions: Mentions
   /** Full rich chrome: the showcase renders inner fences with their own. */
   readonly chrome: RichChrome
-  /** Commit the selected option into the Session; absent for a preview-only seat. */
-  readonly choiceSend?: ChoiceSend | undefined
+  /** Composer write face; absent for a preview-only seat. */
+  readonly choiceInput?: ChoiceInput | undefined
 }
 
-/** Delivery state of the commit row; a new selection returns it to idle. */
-type SendStatus = 'idle' | 'sending' | 'sent' | 'failed'
+/** Draft state of a renderer without a Session seat: empty and unwritable. */
+const EMPTY_DRAFT: ChoiceDraftState = { draft: '', occurrences: [] }
 
-/** Draw the radio option list, the selected option's showcase, and the commit row. */
-export function ChoicesView({ segment, labels, mentions, chrome, choiceSend }: ChoicesViewProps) {
+/** Stand-in selector for that seat; calling it keeps hook order stable. */
+const useNoDraft: UseChoiceDraft = selector => selector(EMPTY_DRAFT)
+
+/** Outcome copy shown under the options after a selection. */
+type FillStatus = 'idle' | 'filled' | 'failed'
+
+/** Draw the radio option list, the selected option's showcase, and the write feedback. */
+export function ChoicesView({ segment, labels, mentions, chrome, choiceInput }: ChoicesViewProps) {
+  const useDraft = choiceInput?.useDraft ?? useNoDraft
+  const draft = useDraft(state => state.draft)
+  const chips = useDraft(state => state.occurrences.length)
   const [active, setActive] = useState(0)
-  const [status, setStatus] = useState<SendStatus>('idle')
+  const [status, setStatus] = useState<FillStatus>('idle')
+  const written = useRef<string | undefined>(undefined)
   const group = useId()
   const index = Math.min(active, segment.choices.length - 1)
   const current = segment.choices[index]
   const select = useCallback((choiceIndex: number) => {
     setActive(choiceIndex)
-    setStatus('idle')
-  }, [])
-  const submit = useCallback(async (): Promise<void> => {
-    if (choiceSend === undefined || current === undefined) return
-    setStatus('sending')
-    try {
-      await choiceSend(`${chrome.choicesAnswerPrefix}${current.label}`)
-      setStatus('sent')
-    } catch {
-      setStatus('failed')
+    const choice = segment.choices[choiceIndex]
+    if (choiceInput === undefined || choice === undefined) {
+      setStatus('idle')
+      return
     }
-  }, [choiceSend, chrome.choicesAnswerPrefix, current])
+    const line = `${chrome.choicesAnswerPrefix}${choice.label}`
+    const accepted = writeChoiceDraft(choiceInput.actions, { draft, chips }, line, written.current)
+    if (!accepted) {
+      setStatus('failed')
+      return
+    }
+    written.current = line
+    setStatus('filled')
+  }, [chips, choiceInput, chrome.choicesAnswerPrefix, draft, segment.choices])
   return (
     <div className="dshr-choices dshr-fence">
       {segment.title !== '' && (
@@ -88,25 +101,13 @@ export function ChoicesView({ segment, labels, mentions, chrome, choiceSend }: C
             labels={labels}
             mentions={mentions}
             chrome={chrome}
-            choiceSend={choiceSend}
+            choiceInput={choiceInput}
           />
         )}
       </div>
-      {choiceSend !== undefined && (
-        <div className="dshr-choices-actions">
-          <button
-            type="button"
-            className="dshr-choices-send"
-            disabled={status === 'sending' || status === 'sent'}
-            onClick={submit}
-          >
-            {status === 'sent'
-              ? chrome.choicesSent
-              : status === 'sending' ? chrome.choicesSending : chrome.choicesSend}
-          </button>
-          {status === 'failed' && (
-            <span className="dshr-choices-error" role="status">{chrome.choicesSendFailed}</span>
-          )}
+      {status !== 'idle' && (
+        <div className="dshr-choices-hint" data-error={status === 'failed' || undefined} role="status">
+          {status === 'failed' ? chrome.choicesFillFailed : chrome.choicesFilled}
         </div>
       )}
     </div>

@@ -10,6 +10,7 @@
  */
 
 import type { MarkdownFileMentions } from '@deepseek-ai/dsh-client-ui-primitives'
+import type { ChoiceInputActions, UseChoiceDraft } from './choice-fill.ts'
 
 /** Locale seat shape the slot renderer synthesizes for registrations. */
 export type Translate = (key: string, params?: Readonly<Record<string, string | number>>) => string
@@ -60,8 +61,10 @@ export interface DisclosureState {
 
 /** Full props the assistant-step seat delivers to this keyed renderer. */
 export interface RichAssistantNodeViewProps {
-  /** Session seat identity; the session-scoped slot always supplies it. */
-  readonly sessionId?: string | undefined
+  /** Session input state selector; a fence selection writes its draft. */
+  readonly useInput?: UseChoiceDraft | undefined
+  /** Session input actions; a fence selection writes its draft. */
+  readonly inputActions?: ChoiceInputActions | undefined
   readonly node: {
     readonly kind: 'assistant-step'
     readonly data: AssistantChatData

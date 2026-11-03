@@ -17,7 +17,7 @@ import { pathImages } from '../markdown-fallback.ts'
 import type { Mentions } from '../markdown-fallback.ts'
 import { rewritePathImages, upgradeText } from '../rules/segments.ts'
 import type { CalloutType, UpgradeSegment } from '../rules/segments.ts'
-import type { ChoiceSend } from '../choice-send.ts'
+import type { ChoiceInput } from '../choice-fill.ts'
 import { CalloutView } from './CalloutView.tsx'
 import { CardsView } from './CardsView.tsx'
 import { ChecklistView } from './ChecklistView.tsx'
@@ -53,22 +53,20 @@ export interface RichChrome {
   readonly imagePreviewFailed: string
   /** Alert titles keyed by GitHub alert flavor. */
   readonly calloutTitles: Readonly<Record<CalloutType, string>>
-  /** Action and status copy of the prototype-choices commit row. */
-  readonly choicesSend: string
-  readonly choicesSending: string
-  readonly choicesSent: string
-  readonly choicesSendFailed: string
-  /** Prefix of the user message a committed choice sends. */
+  /** Feedback copy after a prototype choice reaches the composer. */
+  readonly choicesFilled: string
+  readonly choicesFillFailed: string
+  /** Prefix of the composer line a selected choice writes. */
   readonly choicesAnswerPrefix: string
 }
 
 /** Render one segment spec; the error boundary below wraps the result. */
-function SegmentView({ segment, labels, mentions, chrome, choiceSend }: {
+function SegmentView({ segment, labels, mentions, chrome, choiceInput }: {
   segment: UpgradeSegment
   labels: MarkdownLabels
   mentions: Mentions
   chrome: RichChrome
-  choiceSend: ChoiceSend | undefined
+  choiceInput: ChoiceInput | undefined
 }): ReactNode {
   switch (segment.kind) {
     case 'native':
@@ -92,7 +90,7 @@ function SegmentView({ segment, labels, mentions, chrome, choiceSend }: {
     case 'tab':
       return <TabView segment={segment} labels={labels} />
     case 'choices':
-      return <ChoicesView segment={segment} labels={labels} mentions={mentions} chrome={chrome} choiceSend={choiceSend} />
+      return <ChoicesView segment={segment} labels={labels} mentions={mentions} chrome={chrome} choiceInput={choiceInput} />
     case 'matplotlib':
       return <MatplotlibView segment={segment} labels={labels} chrome={chrome} />
     case 'image':
@@ -126,11 +124,12 @@ export interface RichMarkdownTextProps {
   /** Locale copy for the upgraded components (toggle, supplement slice). */
   readonly chrome: RichChrome
   /** Commit one prototype choice into the Session; absent without a Session seat. */
-  readonly choiceSend?: ChoiceSend | undefined
+  /** Composer write face of the Session; absent without an input seat. */
+  readonly choiceInput?: ChoiceInput | undefined
 }
 
 /** One text block: native while streaming, rule-upgraded once settled. */
-export const RichMarkdownText = memo(function RichMarkdownText({ text, streaming, labels, mentions, chrome, choiceSend }: RichMarkdownTextProps) {
+export const RichMarkdownText = memo(function RichMarkdownText({ text, streaming, labels, mentions, chrome, choiceInput }: RichMarkdownTextProps) {
   if (streaming) {
     return <MarkdownText text={text} streaming labels={labels} />
   }
@@ -153,7 +152,7 @@ export const RichMarkdownText = memo(function RichMarkdownText({ text, streaming
           key={index}
           fallback={<MarkdownText text={segment.source} labels={labels} fileMentions={mentions} pathImages={pathImages} />}
         >
-          <SegmentView segment={segment} labels={labels} mentions={mentions} chrome={chrome} choiceSend={choiceSend} />
+          <SegmentView segment={segment} labels={labels} mentions={mentions} chrome={chrome} choiceInput={choiceInput} />
         </SegmentBoundary>
       ))}
     </>

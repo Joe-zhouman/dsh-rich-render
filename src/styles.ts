@@ -718,46 +718,17 @@ body[data-ds-dark-theme] .dshr-flow-body.dshr-flow-body :not(pre) > code {
   overflow-x: auto;
 }
 
-/* Commit row: one quiet secondary button under the showcase, with the failure
-   reason beside it so a rejected delivery stays visible where the user acted. */
-.dshr-choices-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.dshr-choices-send {
-  appearance: none;
-  padding: 4px 12px;
-  border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: var(--dsw-radius-sm, 6px);
-  background: transparent;
-  color: var(--dsw-alias-label-primary);
-  font: inherit;
+/* Write feedback: one quiet line under the showcase confirming the composer
+   now carries the choice, so a selection made while scrolled away from the
+   input still reports where it went. */
+.dshr-choices-hint {
+  color: var(--dsw-alias-label-secondary);
   font-size: var(--dsh-content-font-size-secondary, 13px);
   line-height: 20px;
-  cursor: pointer;
 }
 
-.dshr-choices-send:hover:not(:disabled) {
-  background: var(--dsw-alias-interactive-bg-hover);
-}
-
-.dshr-choices-send:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.dshr-choices-send:focus-visible {
-  outline: 2px solid var(--dsw-alias-link);
-  outline-offset: 2px;
-}
-
-.dshr-choices-error {
+.dshr-choices-hint[data-error] {
   color: var(--dsw-alias-state-error-primary);
-  font-size: var(--dsh-content-font-size-secondary, 13px);
-  line-height: 20px;
 }
 
 /* ---- Charts ---- */
