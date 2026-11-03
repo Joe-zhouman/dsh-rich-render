@@ -1,16 +1,24 @@
 {
   "name": "dsh-rich-render",
-  "version": "0.9.28",
+  "version": "0.9.29",
   "private": true,
   "type": "module",
   "main": "./lib/index.js",
   "exports": {
-    ".": { "default": "./lib/index.js" },
-    "./client": { "default": "./lib/client.js" }
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    }
   },
   "dsh": {
-    "bundle": { "patch": "./cordis.patch.yml" },
-    "client": { "platform": "web" }
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
   },
   "devDependencies": {
     "@deepseek-ai/schemastery": "link:../../vendor/schemastery",

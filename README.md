@@ -84,7 +84,7 @@ pnpm test           # node --test + 类型剥离：161 项（规则/清单/图�
 
 ## dsh 升级检查点
 
-- diff `packages/client/ui-chat/src/client/chat/AssistantNodeView.tsx`、`AssistantMarkdown.tsx`、`ReasoningRow.tsx`、`contract/slots.ts`、`chat-nodes.ts`，同步 `src/chat-contract.ts` 与复刻组件。
+- diff `packages/client/ui-chat/src/client/chat/AssistantNodeView.tsx`、`AssistantMarkdown.tsx`、`ReasoningRow.tsx`、`contract/slots.ts`、`chat-nodes.ts`，同步 `src/chat-contract.ts` 与复刻组件。会话座位（`sessionId`）与 `conversation` 服务名同样来自这套契约：`ui-session` 的 `SessionStandardProps`、`ui-slots` 的 `ScopeStandardProps`、`ui-conversation` 的 `scopedConversation`。
 - seed externals 白名单（`packages/client/web/src/platform.ts`）若变动，检查 tsdown.config.mjs 的 MODULE_TABLE_KEYS。
 - 已知偏差：`usePresentation` 不可达，折叠思考行恒显摘要预览（内置受工作细节模式门控）。
 
@@ -217,8 +217,9 @@ v2 已上线：行数 2~550（实现容差）、纯数字正则（含科学计�
 ### prototype-choices（方案示意，2026-10-26）
 
 - 围栏 `prototype-choices`，不提供别名；语法 = tab 文法（非缩进 `@选项名` 行开选项，```/~~~ 内层围栏里的 `@` 视为内容；2–30 项、标签纯文本 ≤60 字）+ 可选标题块（首个 `@` 之前恰好一个标题/段落，去尾冒号、≤120 字，多块或代码块整体回退）。
-- 视图分两区：选择区为竖排单选项（`label` 里放一个原生 `<input type="radio">`，每个围栏一组 `name`（`useId()`）；16px、`accent-color: var(--dsw-alias-brand-primary)`，与平台 `Checkbox`、插件管理页的 registry 选择同一套写法，环与圆点由浏览器绘制；选中行 `label-primary` + 600、hover 有底，`:focus-visible` 2px `link` 描边，方向键切换原生可用）；展示区为描边圆角面板。选中项内容走**完整升格管线**（`ChoicesView` 嵌 `RichMarkdownText`）——示意可以是真实渲染的富围栏、代码块或纯文字；仅渲染选中项；选中态组件本地（默认第一项），不写回会话。
-- 与 tab 的分工：tab 是内容分组页（正文级紧凑排版），prototype-choices 是方案对比示意（选项 + 直观预览）。
+- 视图分两区：选择区为竖排单选项（`label` 里放一个原生 `<input type="radio">`，每个围栏一组 `name`（`useId()`）；16px、`accent-color: var(--dsw-alias-brand-primary)`，与平台 `Checkbox`、插件管理页的 registry 选择同一套写法，环与圆点由浏览器绘制；选中行 `label-primary` + 600、hover 有底，`:focus-visible` 2px `link` 描边，方向键切换原生可用）；展示区为描边圆角面板。选中项内容走**完整升格管线**（`ChoicesView` 嵌 `RichMarkdownText`）——示意可以是真实渲染的富围栏、代码块或纯文字；仅渲染选中项；选中态组件本地（默认第一项）。
+- 展示区下方是提交行（v0.9.29）：「发送选择」把当前选中项作为一条用户消息发进本会话，文本为 locale 前缀 + 选项名（zh `已选择：方案二`、en `Selected: …`）。发送经会话座位的 `sessionId` 用 `ctx.sessions.scope(id).get('conversation').send(text)` 入队（`rich-render: choice sender` 效果，与 matplotlib 桥同一套模块级安装模式），因此选择真的进入下一轮而不只是界面预览；发送中按钮禁用，成功后固定为「已发送」，换选项回到可发送，失败在按钮旁给出原因。没有会话座位（无 `sessionId`）时整行不渲染，围栏保持纯预览。
+- 与 tab 的分工：tab 是内容分组页（正文级紧凑排版），prototype-choices 是方案对比示意（选项 + 直观预览 + 一键把选择发回对话）。
 
 ## persona 注入（2026-10-24 已实现并实机验收）
 
@@ -283,6 +284,10 @@ spec 设想独立 channel `/rich-render`。实际：自定义 channel 的 `rpc.h
 ## 修订记录（2026-10-25，v0.2.1）
 
 persona.md 措辞修订（用户编辑，无代码改动，测试 108/108 仍绿）：富渲染总则改为「解释论证默认连贯段落」，收紧原生无序列表与有序列表的使用条件；stack 用途扩展为「同一阶段内多个方向或方案的分组说明」并写明与多级列表的取舍（回应上面"stack 未被自发使用"观察项）；「选择」节从条目列表改为连贯段落。persona 为运行时资产，宿主启动时一次性读入。desktop profile 已 remove+add 刷新至 0.2.1（运行中的桌面端重启后生效）；web profile 仍装 0.2.0（persona 为旧版），需要时同法刷新。
+
+## 修订记录（2026-11-03，v0.9.29）
+
+用户需求：`prototype-choices` 选中的内容要真的进入下一轮对话，而不只是高亮预览。做法：展示区下方加提交行，「发送选择」把当前选项作为一条用户消息发进本会话（文本 = locale 前缀 + 选项名，zh `已选择：方案二` / en `Selected: …`），消息经会话座位的 `sessionId`、用 `ctx.sessions.scope(id).get('conversation').send(text)` 入队——这正是 composer 自己发消息走的作用域服务（`ui-conversation` 的 `send()`），所以选择会作为真正的用户轮次进入上下文。跨模块传递沿用 matplotlib 桥的模式：`src/choice-send.ts` 存一个模块级 sender，`client.ts` 在 `ctx.effect` 里安装/清理，`RichAssistantNodeView` 由 `sessionId` 造出 `(text) => sendChoice(sessionId, text)` 并沿 `RichMarkdownText → ChoicesView` 传下去（没有 `sessionId` 时不渲染提交行，围栏保持纯预览）。交互状态：发送中禁用、成功后固定「已发送」、换选项回到可发送、失败在按钮旁显示 retry 文案；显示语言随 locale。persona 补一句：用户点「发送选择」后模型会收到 `已选择：<选项名>`，按该选择继续、不要再问选哪个。测试补：提交行存在、点击把 `choicesAnswerPrefix方案一` 送进 `session-1`、无会话座位时整行不渲染。`rich-render: choice sender` 生效需要页面刷新（客户端半区）。两 profile 已刷 0.9.29（桌面端完全退出重开或刷新页面后生效）。
 
 ## 修订记录（2026-11-02，v0.9.28）
 

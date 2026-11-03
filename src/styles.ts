@@ -718,6 +718,48 @@ body[data-ds-dark-theme] .dshr-flow-body.dshr-flow-body :not(pre) > code {
   overflow-x: auto;
 }
 
+/* Commit row: one quiet secondary button under the showcase, with the failure
+   reason beside it so a rejected delivery stays visible where the user acted. */
+.dshr-choices-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dshr-choices-send {
+  appearance: none;
+  padding: 4px 12px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: var(--dsw-radius-sm, 6px);
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  font-size: var(--dsh-content-font-size-secondary, 13px);
+  line-height: 20px;
+  cursor: pointer;
+}
+
+.dshr-choices-send:hover:not(:disabled) {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.dshr-choices-send:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.dshr-choices-send:focus-visible {
+  outline: 2px solid var(--dsw-alias-link);
+  outline-offset: 2px;
+}
+
+.dshr-choices-error {
+  color: var(--dsw-alias-state-error-primary);
+  font-size: var(--dsh-content-font-size-secondary, 13px);
+  line-height: 20px;
+}
+
 /* ---- Charts ---- */
 .dshr-chart {
   display: flex;
@@ -1354,5 +1396,20 @@ body[data-ds-dark-theme] .dshr-stack-box {
   text-align: right;
   font-variant-numeric: tabular-nums;
   color: var(--dsw-alias-label-secondary);
+}
+
+/* ---- Deferred formula subtrees (2026-11-03) ----
+   Math-heavy transcripts hold 600+ KaTeX subtrees (~34k DOM nodes). Every
+   composer-menu open or model switch then invalidated the whole document and
+   cost ~0.8 s of style recalc, measured in the desktop window. Skipping the
+   offscreen formula paragraphs brings the same interactions to 0.27-0.39 s.
+   Onscreen content renders unchanged; the auto keyword keeps each paragraph's
+   last rendered size once it has been laid out. */
+p:has(.katex),
+li:has(.katex),
+div:has(> .katex-display),
+.dshr-inline-md:has(.katex) {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 300px;
 }
 `

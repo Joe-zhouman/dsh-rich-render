@@ -43,6 +43,12 @@ export const zh: Readonly<Record<string, string>> = {
   calloutImportant: '重要',
   calloutWarning: '警告',
   calloutCaution: '危险',
+  // Prototype-choices commit row.
+  choicesSend: '发送选择',
+  choicesSending: '发送中…',
+  choicesSent: '已发送',
+  choicesSendFailed: '发送失败，请重试',
+  choicesAnswerPrefix: '已选择：',
   // Watermark layer chrome.
   wmTitle: '水印设置',
   wmClose: '关闭',
@@ -94,6 +100,12 @@ export const en: Readonly<Record<string, string>> = {
   calloutImportant: 'Important',
   calloutWarning: 'Warning',
   calloutCaution: 'Caution',
+  // Prototype-choices commit row.
+  choicesSend: 'Send choice',
+  choicesSending: 'Sending…',
+  choicesSent: 'Sent',
+  choicesSendFailed: "Couldn't send — try again",
+  choicesAnswerPrefix: 'Selected: ',
   // Watermark layer chrome.
   wmTitle: 'Watermark settings',
   wmClose: 'Close',

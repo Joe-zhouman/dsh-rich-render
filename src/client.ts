@@ -11,13 +11,14 @@
 
 import { RichAssistantNodeView } from './components/RichAssistantNodeView.tsx'
 import { WatermarkLayer } from './components/WatermarkLayer.tsx'
+import { setChoiceSender } from './choice-send.ts'
 import { NS, en, zh } from './locales.ts'
 import { setMatplotlibRpc } from './matplotlib-bridge.ts'
 import { injectStylesheet } from './stylesheet.ts'
-import type { ClientCtx } from './client-types.ts'
+import type { ClientCtx, ConversationFace } from './client-types.ts'
 
 /** Services this client plugin consumes. */
-export const inject = ['slots', 'locale', 'connection', 'theme']
+export const inject = ['slots', 'locale', 'connection', 'theme', 'sessions']
 
 /**
  * UI face: the system sans stack from the reference config. Segoe UI leads so
@@ -49,6 +50,14 @@ export function apply(ctx: ClientCtx): void {
     setMatplotlibRpc(ctx.connection.rpc)
     return () => setMatplotlibRpc(undefined)
   }, 'rich-render: matplotlib bridge')
+  ctx.effect(() => setChoiceSender(async (sessionId, text) => {
+    const scope = ctx.sessions?.scope(sessionId)
+    const conversation = scope?.get('conversation') as ConversationFace | undefined
+    if (conversation === undefined) {
+      throw new Error(`rich-render: session "${sessionId}" has no Conversation service`)
+    }
+    await conversation.send(text)
+  }), 'rich-render: choice sender')
   ctx.slots.inject('conversation.chat.node', () => ctx.slots.register({
     name: 'conversation.chat.node',
     key: 'assistant-step',

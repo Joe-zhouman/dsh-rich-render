@@ -60,6 +60,8 @@ export interface DisclosureState {
 
 /** Full props the assistant-step seat delivers to this keyed renderer. */
 export interface RichAssistantNodeViewProps {
+  /** Session seat identity; the session-scoped slot always supplies it. */
+  readonly sessionId?: string | undefined
   readonly node: {
     readonly kind: 'assistant-step'
     readonly data: AssistantChatData

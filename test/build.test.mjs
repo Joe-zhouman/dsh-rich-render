@@ -170,7 +170,7 @@ test('the client artifact loads through the module table and replaces the assist
   const { dom, loaded, asked } = loadClient()
   assert.equal(loaded.id, 'dsh-rich-render')
   assert.equal(typeof loaded.exports.apply, 'function')
-  assert.deepEqual([...loaded.exports.inject], ['slots', 'locale', 'connection', 'theme'])
+  assert.deepEqual([...loaded.exports.inject], ['slots', 'locale', 'connection', 'theme', 'sessions'])
   assert.deepEqual(
     [...new Set(asked)].sort(),
     [...MODULE_TABLE].sort(),
@@ -598,7 +598,7 @@ test('mindmap renders bare nodes, a root pill, branch colors, and bump-edge hook
   assert.match(sheet, /\.dshr-mm-root[\s\S]*?border-radius: 999px;/u)
 })
 
-test('prototype choices render radio options and a live showcase', () => {
+test('prototype choices render radio options and a live showcase', async () => {
   assert.equal(buildOnce().status, 0, 'the artifact is only judged from a successful build')
   const { react, jsxRuntime } = stubReact()
   const markdownTexts = []
@@ -611,6 +611,7 @@ test('prototype choices render radio options and a live showcase', () => {
     },
   })
   const registrations = []
+  const sent = []
   const ctx = {
     slots: {
       inject(name, factory) { factory() },
@@ -620,11 +621,23 @@ test('prototype choices render radio options and a live showcase', () => {
     locale: { register: () => () => {} },
     connection: { rpc: {} },
     theme: { overrideTokens: () => () => {} },
+    sessions: {
+      scope(id) {
+        return {
+          get(name) {
+            return name === 'conversation'
+              ? { send: async text => { sent.push({ id, text }) } }
+              : undefined
+          },
+        }
+      },
+    },
   }
   loaded.exports.apply(ctx)
   const View = registrations[0].component
   const text = '````prototype-choices\n@方案一\n```stack\n1. 甲\n2. 乙\n```\n\n@方案二\n普通说明。\n````'
-  const element = View({
+  const seat = {
+    sessionId: 'session-1',
     node: {
       kind: 'assistant-step',
       data: {
@@ -642,8 +655,8 @@ test('prototype choices render radio options and a live showcase', () => {
     renderMessageImages: () => null,
     fileMentions: () => undefined,
     t: key => key,
-  }, react)
-  const tree = renderStub(element)
+  }
+  const tree = renderStub(View(seat, react))
   const options = collectStub(tree, node =>
     typeof node.type === 'string' && String(node.props?.className ?? '').includes('dshr-choices-option'))
   assert.deepEqual(options.map(node => node.props.children[1]?.props?.children), ['方案一', '方案二'])
@@ -660,6 +673,21 @@ test('prototype choices render radio options and a live showcase', () => {
   // The inactive option's prose stays unrendered.
   assert.ok(!markdownTexts.some(props => props.text?.includes('普通说明')),
     'inactive option content stays unrendered')
+  // The commit row sends the selected label through the seat's Session scope,
+  // so the choice leaves the component and enters the conversation.
+  const send = collectStub(tree, node =>
+    typeof node.type === 'string' && String(node.props?.className ?? '').includes('dshr-choices-send'))
+  assert.equal(send.length, 1, 'the commit row offers one send action')
+  assert.equal(send[0].props.disabled, false)
+  assert.equal(send[0].props.children, 'choicesSend')
+  await send[0].props.onClick()
+  assert.deepEqual(sent, [{ id: 'session-1', text: 'choicesAnswerPrefix方案一' }],
+    'the selected option label is sent into the seat Session')
+  // Without a Session seat the fence stays preview-only.
+  const previewOnly = renderStub(View({ ...seat, sessionId: undefined }, react))
+  assert.equal(collectStub(previewOnly, node =>
+    typeof node.type === 'string' && String(node.props?.className ?? '').includes('dshr-choices-actions')).length, 0,
+    'no commit row without a Session')
 })
 
 test('typed callouts render the alert flavor, title, and icon', () => {

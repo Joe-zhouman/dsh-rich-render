@@ -22,6 +22,22 @@ export interface SlotRegistrationOptions {
   readonly order?: number
 }
 
+/** One Agent-scoped Session face behind `ctx.sessions.scope`. */
+export interface ScopedSession {
+  /** Session-scoped service lookup (the Conversation service rides this). */
+  get(name: string): unknown
+}
+
+/** The Conversation verbs a fence choice uses. */
+export interface ConversationFace {
+  /**
+   * Send one prompt into the scoped Session as a queued user turn.
+   * @param text - prompt text, sent verbatim as one text block.
+   * @returns completion; business failures reject.
+   */
+  send(text: string): Promise<void>
+}
+
 /** The `ctx.effect` face: register one disposer on the plugin fiber. */
 export type EffectFn = (
   factory: () => (() => void) | void,
@@ -66,5 +82,14 @@ export interface ClientCtx {
   /** Host RPC channel access (the matplotlib bridge); composed by the web shell. */
   readonly connection?: {
     readonly rpc: import('../matplotlib-bridge.ts').RpcFace
+  }
+  /** Agent-scope tracker: borrows a retained Session scope to reach its services. */
+  readonly sessions?: {
+    /**
+     * Borrow a retained Agent scope without extending its lifetime.
+     * @param id - session id.
+     * @returns the scoped Context, or undefined without a retained generation.
+     */
+    scope(id: string): ScopedSession | undefined
   }
 }
