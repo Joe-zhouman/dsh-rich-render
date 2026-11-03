@@ -81,6 +81,9 @@ export function ChoicesView({ segment, labels, mentions, chrome, choiceInput }: 
             key={choiceIndex}
             className="dshr-choices-option"
             data-active={choiceIndex === index || undefined}
+            // The checked radio fires no change event, so re-picking the active
+            // option still rewrites a draft the user has since cleared.
+            onClick={() => { if (choiceIndex === index) select(choiceIndex) }}
           >
             <input
               type="radio"
