@@ -75,9 +75,9 @@ export const RichAssistantNodeView = memo(function RichAssistantNodeView({
       warning: t('calloutWarning'),
       caution: t('calloutCaution'),
     },
-    choicesFilled: t('choicesFilled'),
     choicesFillFailed: t('choicesFillFailed'),
     choicesAnswerPrefix: t('choicesAnswerPrefix'),
+    choicesOther: t('choicesOther'),
   }), [t])
   // A fence writes its selection into the Session composer; a seat without the
   // input face keeps the choice preview-only.

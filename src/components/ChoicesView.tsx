@@ -7,16 +7,17 @@
  * upgrade pipeline, so a prototype can be a live rich fence, a code block, or
  * plain prose.
  *
- * Choosing an option previews it and writes one `已选择：<选项名>` line above
+ * Every fence ends with a built-in 其他 option, added here rather than left to
+ * the model, so a reader can always answer outside the enumerated designs.
+ * Choosing either kind previews it and writes one `已选择：<选项名>` line above
  * whatever the draft already holds; the fence never sends. The user adds their
- * own supplement and sends the message themselves, so a decision always leaves
- * room for instructions that only they know.
+ * own supplement and sends the message themselves.
  */
 
 import { useCallback, useId, useRef, useState } from 'react'
 import type { MarkdownLabels } from '@deepseek-ai/dsh-client-ui-primitives'
-import type { ChoicesSegment } from '../rules/segments.ts'
-import { writeChoiceDraft } from '../choice-fill.ts'
+import type { ChoicesSegment, TabSpec } from '../rules/segments.ts'
+import { withOtherChoice, writeChoiceDraft } from '../choice-fill.ts'
 import type { ChoiceDraftState, ChoiceInput, UseChoiceDraft } from '../choice-fill.ts'
 import { strictLines } from '../rules/strict-lines.ts'
 import type { Mentions } from '../markdown-fallback.ts'
@@ -40,43 +41,37 @@ const EMPTY_DRAFT: ChoiceDraftState = { draft: '', occurrences: [] }
 /** Stand-in selector for that seat; calling it keeps hook order stable. */
 const useNoDraft: UseChoiceDraft = selector => selector(EMPTY_DRAFT)
 
-/** Outcome copy shown under the options after a selection. */
-type FillStatus = 'idle' | 'filled' | 'failed'
-
 /** Draw the radio option list, the selected option's showcase, and the write feedback. */
 export function ChoicesView({ segment, labels, mentions, chrome, choiceInput }: ChoicesViewProps) {
   const useDraft = choiceInput?.useDraft ?? useNoDraft
   const draft = useDraft(state => state.draft)
   const chips = useDraft(state => state.occurrences.length)
   const [active, setActive] = useState(0)
-  const [status, setStatus] = useState<FillStatus>('idle')
+  const [failed, setFailed] = useState(false)
   const written = useRef<string | undefined>(undefined)
   const group = useId()
-  const index = Math.min(active, segment.choices.length - 1)
-  const current = segment.choices[index]
+  // The way out of the enumerated designs belongs to the renderer, not the
+  // model: every fence offers it, and an authored one is left alone.
+  const other: TabSpec = { label: chrome.choicesOther, body: '' }
+  const options = withOtherChoice(segment.choices, other)
+  const index = Math.min(active, options.length - 1)
+  const current = options[index]
   const select = useCallback((choiceIndex: number) => {
     setActive(choiceIndex)
-    const choice = segment.choices[choiceIndex]
-    if (choiceInput === undefined || choice === undefined) {
-      setStatus('idle')
-      return
-    }
+    const choice = options[choiceIndex]
+    if (choiceInput === undefined || choice === undefined) return
     const line = `${chrome.choicesAnswerPrefix}${choice.label}`
     const accepted = writeChoiceDraft(choiceInput.actions, { draft, chips }, line, written.current)
-    if (!accepted) {
-      setStatus('failed')
-      return
-    }
-    written.current = line
-    setStatus('filled')
-  }, [chips, choiceInput, chrome.choicesAnswerPrefix, draft, segment.choices])
+    if (accepted) written.current = line
+    setFailed(!accepted)
+  }, [chips, choiceInput, chrome.choicesAnswerPrefix, draft, options])
   return (
     <div className="dshr-choices dshr-fence">
       {segment.title !== '' && (
         <div className="dshr-cards-title"><InlineMarkdown text={segment.title} labels={labels} /></div>
       )}
       <div className="dshr-choices-list">
-        {segment.choices.map((choice, choiceIndex) => (
+        {options.map((choice, choiceIndex) => (
           <label
             key={choiceIndex}
             className="dshr-choices-option"
@@ -96,8 +91,8 @@ export function ChoicesView({ segment, labels, mentions, chrome, choiceInput }: 
           </label>
         ))}
       </div>
-      <div className="dshr-choices-panel">
-        {current !== undefined && current.body !== '' && (
+      {current !== undefined && current.body !== '' && (
+        <div className="dshr-choices-panel">
           <RichMarkdownText
             text={strictLines(current.body)}
             streaming={false}
@@ -106,13 +101,9 @@ export function ChoicesView({ segment, labels, mentions, chrome, choiceInput }: 
             chrome={chrome}
             choiceInput={choiceInput}
           />
-        )}
-      </div>
-      {status !== 'idle' && (
-        <div className="dshr-choices-hint" data-error={status === 'failed' || undefined} role="status">
-          {status === 'failed' ? chrome.choicesFillFailed : chrome.choicesFilled}
         </div>
       )}
+      {failed && <div className="dshr-choices-error" role="status">{chrome.choicesFillFailed}</div>}
     </div>
   )
 }

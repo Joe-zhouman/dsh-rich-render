@@ -53,11 +53,12 @@ export interface RichChrome {
   readonly imagePreviewFailed: string
   /** Alert titles keyed by GitHub alert flavor. */
   readonly calloutTitles: Readonly<Record<CalloutType, string>>
-  /** Feedback copy after a prototype choice reaches the composer. */
-  readonly choicesFilled: string
+  /** Write failure copy of a prototype choice. */
   readonly choicesFillFailed: string
   /** Prefix of the composer line a selected choice writes. */
   readonly choicesAnswerPrefix: string
+  /** Built-in closing option every fence offers. */
+  readonly choicesOther: string
 }
 
 /** Render one segment spec; the error boundary below wraps the result. */

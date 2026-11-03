@@ -92,6 +92,30 @@ export function writeChoiceDraft(
   }
   // A chip draft keeps its chips: the line lands above them unless it is there already.
   if (state.draft === line || state.draft.startsWith(`${line}\n`)) return true
-  const span = actions.captureInsertion()
-  return actions.insertText(`${line}\n`, { start: 0, end: 0, draftRev: span.draftRev })
+  // A concurrent edit between render and click invalidates the first span; one retry
+  // covers a keystroke landing in that window.
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const span = actions.captureInsertion()
+    if (actions.insertText(`${line}\n`, { start: 0, end: 0, draftRev: span.draftRev })) return true
+  }
+  return false
+}
+
+/** Spellings an authored fence may already use for the built-in "other" choice. */
+const OTHER_LABELS = /^(?:其他|其它|other)$/iu
+
+/**
+ * Append the built-in "other" choice unless the fence already offers one.
+ *
+ * Every fence ends with a way out of its own options: the reader writes the
+ * choice the model did not think of, and the composer still receives the same
+ * `已选择：其他` line.
+ * @param choices - options authored in the fence.
+ * @param other - the built-in option to append.
+ * @returns the options to render.
+ */
+export function withOtherChoice<T extends { readonly label: string }>(choices: readonly T[], other: T): readonly T[] {
+  return choices.some(choice => OTHER_LABELS.test(choice.label.trim()))
+    ? choices
+    : [...choices, other]
 }

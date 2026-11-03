@@ -44,9 +44,9 @@ export const zh: Readonly<Record<string, string>> = {
   calloutWarning: '警告',
   calloutCaution: '危险',
   // Prototype-choices composer write.
-  choicesFilled: '已填入输入框，可补充后发送',
   choicesFillFailed: '填入输入框失败，请重试',
   choicesAnswerPrefix: '已选择：',
+  choicesOther: '其他',
   // Watermark layer chrome.
   wmTitle: '水印设置',
   wmClose: '关闭',
@@ -99,9 +99,9 @@ export const en: Readonly<Record<string, string>> = {
   calloutWarning: 'Warning',
   calloutCaution: 'Caution',
   // Prototype-choices composer write.
-  choicesFilled: 'Added to the composer — add details, then send',
   choicesFillFailed: "Couldn't add it to the composer — try again",
   choicesAnswerPrefix: 'Selected: ',
+  choicesOther: 'Other',
   // Watermark layer chrome.
   wmTitle: 'Watermark settings',
   wmClose: 'Close',

@@ -718,17 +718,12 @@ body[data-ds-dark-theme] .dshr-flow-body.dshr-flow-body :not(pre) > code {
   overflow-x: auto;
 }
 
-/* Write feedback: one quiet line under the showcase confirming the composer
-   now carries the choice, so a selection made while scrolled away from the
-   input still reports where it went. */
-.dshr-choices-hint {
-  color: var(--dsw-alias-label-secondary);
+/* Write failure: the composer refused the line, so say so instead of leaving
+   the reader wondering whether the click registered. */
+.dshr-choices-error {
+  color: var(--dsw-alias-state-error-primary);
   font-size: var(--dsh-content-font-size-secondary, 13px);
   line-height: 20px;
-}
-
-.dshr-choices-hint[data-error] {
-  color: var(--dsw-alias-state-error-primary);
 }
 
 /* ---- Charts ---- */

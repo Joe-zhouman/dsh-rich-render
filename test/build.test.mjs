@@ -653,7 +653,8 @@ test('prototype choices render radio options and a live showcase', async () => {
   const tree = renderStub(View(seat, react))
   const options = collectStub(tree, node =>
     typeof node.type === 'string' && String(node.props?.className ?? '').includes('dshr-choices-option'))
-  assert.deepEqual(options.map(node => node.props.children[1]?.props?.children), ['方案一', '方案二'])
+  // The renderer appends the built-in way out of the enumerated designs.
+  assert.deepEqual(options.map(node => node.props.children[1]?.props?.children), ['方案一', '方案二', 'choicesOther'])
   assert.equal(options.filter(node => node.props['data-active'] !== undefined).length, 1)
   // Options are native radio inputs sharing one name, so the group keeps the
   // browser's own keyboard and focus behavior.

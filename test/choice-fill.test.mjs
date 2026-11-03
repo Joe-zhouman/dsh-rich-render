@@ -5,7 +5,7 @@
  */
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { composeChoiceDraft, writeChoiceDraft } from '../src/choice-fill.ts'
+import { composeChoiceDraft, withOtherChoice, writeChoiceDraft } from '../src/choice-fill.ts'
 
 const LINE = '已选择：方案二'
 
@@ -76,4 +76,27 @@ test('a refused insertion reports failure to the fence', () => {
     insertText: () => false,
   }
   assert.equal(writeChoiceDraft(actions, { draft: '@文件', chips: 1 }, LINE, undefined), false)
+})
+
+test('a refused insertion is retried once, then reports failure', () => {
+  let attempts = 0
+  const actions = {
+    setDraft: () => {},
+    captureInsertion: () => ({ start: 0, end: 0, draftRev: ++attempts }),
+    insertText: () => false,
+  }
+  assert.equal(writeChoiceDraft(actions, { draft: '@文件', chips: 1 }, LINE, undefined), false)
+  assert.equal(attempts, 2, 'a stale span gets one retry')
+})
+
+test('every fence gains the built-in other choice', () => {
+  const other = { label: '其他', body: '' }
+  assert.deepEqual(withOtherChoice([{ label: '方案一', body: '' }], other).map(choice => choice.label), ['方案一', '其他'])
+})
+
+test('an authored other choice is not duplicated', () => {
+  const other = { label: 'Other', body: '' }
+  for (const label of ['其他', '其它', 'Other', ' other ']) {
+    assert.deepEqual(withOtherChoice([{ label, body: '' }], other).map(choice => choice.label), [label])
+  }
 })
