@@ -6,10 +6,11 @@
  *
  * Everything else mirrors the shipped behavior: block-kind split, groupPart
  * filtering, hasVisible shell skip, interrupted stopped marker, reasoning
- * disclosure with turn-process folding, image galleries through the seat's
- * renderer, and unknown blocks as JSON cards. Diff upstream when upgrading
- * dsh: AssistantNodeView.tsx, AssistantMarkdown.tsx in
- * packages/client/ui-chat/src/client/chat/.
+ * disclosure with turn-process folding, image galleries through the shared
+ * `conversation.images.content` Factory (dsh 0.2.2 removed the seat's
+ * `renderMessageImages`/`fileMentions` currency), and unknown blocks as JSON
+ * cards. Diff upstream when upgrading dsh: AssistantNodeView.tsx,
+ * AssistantMarkdown.tsx in packages/client/ui-chat/src/client/chat/.
  */
 
 import { Fragment, memo, useCallback, useMemo } from 'react'
@@ -25,22 +26,9 @@ const NOOP = (): void => {}
 
 /** Streaming, settled, and interrupted Assistant states share one renderer. */
 export const RichAssistantNodeView = memo(function RichAssistantNodeView({
-  useInput, inputActions, node, groupPart, useDisclosure, useTurnData, turnProcess, openFile, renderMessageImages, fileMentions, t,
+  useInput, inputActions, node, groupPart, useDisclosure, turnProcess, loadImage, renderFactorySlot, t,
 }: RichAssistantNodeViewProps) {
   const data = node.data
-  const turn = node.location.kind === 'turn' || node.location.kind === 'step'
-    ? node.location.turn
-    : undefined
-  const tail = useTurnData('turn-tail')
-  const owner = useMemo(() => {
-    if (turn?.status !== 'closed' || data.finalNode === undefined) return undefined
-    if (tail?.closing?.finalNode.seq !== data.finalNode.seq) return undefined
-    return { turn, seq: data.finalNode.seq, openFile }
-  }, [data.finalNode, openFile, tail, turn])
-  const mentions = useMemo(
-    () => owner === undefined ? undefined : fileMentions(owner),
-    [fileMentions, owner],
-  )
   const reasoningHidden = turnProcess !== undefined
     && turnProcess.foldable
     && turnProcess.spec.answerStep === data.step
@@ -111,7 +99,7 @@ export const RichAssistantNodeView = memo(function RichAssistantNodeView({
             text={block.text}
             streaming={streaming}
             labels={labels}
-            mentions={mentions}
+            mentions={undefined}
             chrome={chrome}
             choiceInput={choiceInput}
           />,
@@ -141,8 +129,9 @@ export const RichAssistantNodeView = memo(function RichAssistantNodeView({
         }
         rendered.push(
           <Fragment key={start}>
-            {renderMessageImages({
+            {renderFactorySlot('conversation.images.content', {
               images: group.map(({ attachment }) => ({ attachment })),
+              loadImage,
               align: 'start',
             })}
           </Fragment>,

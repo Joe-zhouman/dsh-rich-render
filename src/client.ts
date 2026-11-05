@@ -52,6 +52,11 @@ export function apply(ctx: ClientCtx): void {
   ctx.slots.inject('conversation.chat.node', () => ctx.slots.register({
     name: 'conversation.chat.node',
     key: 'assistant-step',
+    // Below the shipped entry's default 0: keyed cells render the lowest
+    // priority, so this legally shadows it instead of racing the same
+    // priority (the loser's registration throws and dies silently), and the
+    // shipped entry stays live as the abdication fallback.
+    priority: -100,
     locale: NS,
   }, RichAssistantNodeView))
   ctx.slots.inject('shell.overlay', () => ctx.slots.register({

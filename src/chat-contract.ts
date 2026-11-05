@@ -9,7 +9,7 @@
  * that package plus AssistantNodeView.tsx and AssistantMarkdown.tsx.
  */
 
-import type { MarkdownFileMentions } from '@deepseek-ai/dsh-client-ui-primitives'
+import type { ReactNode } from 'react'
 import type { ChoiceInputActions, UseChoiceDraft } from './choice-fill.ts'
 
 /** Locale seat shape the slot renderer synthesizes for registrations. */
@@ -81,14 +81,21 @@ export interface RichAssistantNodeViewProps {
   readonly useTurnData: (key: 'turn-tail') => TurnTailRecord | undefined
   readonly turnProcess?: TurnProcessLike | undefined
   readonly openFile: (path: string, options?: { readonly line?: number }) => void
-  readonly renderMessageImages: (args: {
+  /**
+   * Gateway-authorized image URL loader; dsh 0.2.2 moved it here from the
+   * removed `renderMessageImages` seat currency (the gallery is reached
+   * through the shared `conversation.images.content` Factory instead).
+   */
+  readonly loadImage: (attachment: unknown) => Promise<string>
+  /**
+   * Per-entry Factory renderer every slot entry receives; the image branch
+   * calls the official gallery Factory (`conversation.images.content`), the
+   * same path the shipped `conversation.chat.message.images` entry takes.
+   */
+  readonly renderFactorySlot: (key: 'conversation.images.content', props: {
     readonly images: ReadonlyArray<{ readonly attachment: unknown }>
+    readonly loadImage: (attachment: unknown) => Promise<string>
     readonly align: 'start'
-  }) => unknown
-  readonly fileMentions: (owner: {
-    readonly turn: TurnLocationLike
-    readonly seq: number
-    readonly openFile: (path: string) => void
-  }) => MarkdownFileMentions | undefined
+  }) => ReactNode
   readonly t: Translate
 }
