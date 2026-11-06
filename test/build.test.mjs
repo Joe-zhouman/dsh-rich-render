@@ -927,7 +927,7 @@ test('host entry: merged section registers main-session-only; RPC status answers
   assert.equal(section.interpolate, false)
   assert.ok(Number.isFinite(section.order))
   assert.equal(section.text({ agent: { session: { header: { origin: 'subagent' } } } }), '')
-  assert.ok(section.text({ agent: { session: { header: {} } } }).includes('富渲染环境'))
+  assert.ok(section.text({ agent: { session: { header: {} } } }).includes('Rich rendering environment'))
 
   const status = await callRoute(ctx.routes, 'status', {})
   assert.deepEqual(status, { ok: true, value: { matplotlib: { enabled: false, ready: false } } })

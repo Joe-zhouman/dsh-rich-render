@@ -15,7 +15,7 @@ const markdown = readFileSync(join(root, 'persona.md'), 'utf8')
 
 test('persona.md parses into merged + matplotlib sections', () => {
   const sections = buildSections(markdown, { python: '3.12.7', matplotlib: '3.11.2', numpy: '2.5.3' })
-  assert.ok(sections.environments.startsWith('## 富渲染环境'))
+  assert.ok(sections.environments.startsWith('## Rich rendering environment'))
   for (const fence of ['mindmap', 'stack', 'tree', 'todo', 'timeline']) {
     assert.ok(sections.environments.includes(fence), `merged section mentions ${fence}`)
   }

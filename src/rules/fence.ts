@@ -451,11 +451,13 @@ const STACK_CONNECTOR = /^[ \t]*(?:[-–—=─═>→⇒↓⇓|│]+)[ \t]*$/u
 /**
  * `stack` fence body: numbered boxes; same first number shares one layer row.
  * @param body - code-block content.
- * @returns layers sorted ascending, or undefined when any unindented line is
- * not a box header or connector, a fill does not resolve, or no box parses.
+ * @returns layers sorted ascending, or undefined when no box header parses, an
+ * unindented line precedes the first header, or a fill does not resolve.
  * Tolerated deviations: connector-only lines are ignored, the box header's
- * trailing dot may be missing, hex fills may omit the leading `#`, and lines
- * inside a flush-left inner code fence stay box content.
+ * trailing dot may be missing, hex fills may omit the leading `#`, lines inside
+ * a flush-left inner code fence stay box content, an unindented line that is not
+ * a header continues the box above it, and blank lines directly under a header
+ * are dropped.
  */
 export function parseStackFence(body: string): StackLayerSpec[] | undefined {
   const lines = body.split('\n')
@@ -487,7 +489,14 @@ export function parseStackFence(body: string): StackLayerSpec[] | undefined {
       continue
     }
     const match = STACK_HEADER.exec(line)
-    if (match === null) return undefined
+    if (match === null) {
+      // An unindented line that no header pattern claims continues the box above
+      // it: a missing two-space indent is the commonest authoring slip, and the
+      // text is unambiguous once a box is open.
+      if (current === undefined) return undefined
+      current.parts.push(line)
+      continue
+    }
     const fill = match[3] === undefined ? undefined : normalizeFill(match[3])
     if (match[3] !== undefined && fill === undefined) return undefined
     current = { layer: Number(match[1]), fill, parts: [match[4] ?? ''] }
@@ -496,7 +505,7 @@ export function parseStackFence(body: string): StackLayerSpec[] | undefined {
   if (drafts.length === 0) return undefined
   const byLayer = new Map<number, { content: string; fill: string | undefined }[]>()
   for (const draft of drafts) {
-    let content = draft.parts.join('\n').replace(/^[ \t]*\n/u, '').replace(/\s+$/u, '')
+    let content = draft.parts.join('\n').replace(/^(?:[ \t]*\n)+/u, '').replace(/\s+$/u, '')
     if (content.trim() === '') content = ''
     const boxes = byLayer.get(draft.layer) ?? []
     boxes.push({ content, fill: draft.fill })

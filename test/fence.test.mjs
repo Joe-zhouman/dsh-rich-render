@@ -114,11 +114,23 @@ test('stack: header-line first content joins the body', () => {
   assert.equal(layers[0].boxes[0].content, '首行内容\n次行')
 })
 
-test('stack: unindented non-header line, bad color, or empty input rejected', () => {
-  assert.equal(parseStackFence('1. box\n裸行'), undefined)
+test('stack: bad color or empty input rejected', () => {
   assert.equal(parseStackFence('1.[not-a-color]\n  x'), undefined)
   assert.equal(parseStackFence(''), undefined)
   assert.equal(parseStackFence('说明文字'), undefined)
+})
+
+test('stack: an unindented line continues the open box', () => {
+  const layers = parseStackFence('1. box\n裸行')
+  assert.equal(layers[0].boxes[0].content, 'box\n裸行')
+  // Only once a header is open; text before the first header still fails.
+  assert.equal(parseStackFence('裸行\n1. box'), undefined)
+})
+
+test('stack: blank lines under a header do not leave a leading gap', () => {
+  const layers = parseStackFence('1.1.[#f7f7f7]\n\n  Branch 1.\n1.2.\n\nBranch 2.')
+  assert.equal(layers[0].boxes[0].content, 'Branch 1.')
+  assert.equal(layers[0].boxes[1].content, 'Branch 2.')
 })
 
 test('oversized fence bodies degrade before parsing', () => {
