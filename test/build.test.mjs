@@ -205,6 +205,13 @@ test('the client artifact loads through the module table and replaces the assist
   assert.notEqual(style, null, 'apply installs the plugin stylesheet')
   assert.match(style.textContent, /\.dshr-flow-root/u, 'the stylesheet carries the flow shell')
   assert.match(style.textContent, /\.dshr-wm-img/u, 'the stylesheet carries the watermark layer')
+  // Inline code keeps one size ratio on every surface, floored so small lines
+  // stay legible and capped so the floor never outgrows its own line.
+  assert.match(
+    style.textContent,
+    /\.dshr-flow-body\.dshr-flow-body :not\(pre\) > code \{[\s\S]*?font-size: clamp\(0\.875em, 12px, 1em\) !important;/u,
+    'inline code takes 0.875em with a 12px floor inside every flow surface',
+  )
 })
 
 /**
