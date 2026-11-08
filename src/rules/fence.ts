@@ -135,24 +135,55 @@ function paragraphRootedMindmap(body: string): MindmapNodeSpec[] | undefined {
   return trees
 }
 
+/** Whitespace separating an entry name from its note. */
+const NOTE_SPACE = /[ \t\u3000]/u
+/** Markers that open a note with no whitespace before them (`src/→说明`). */
+const ATTACHED_NOTE_MARKERS = new Set(['→', '➔', '➜', '➡', '⇒', '：', '＃'])
+/** Markers that open a note when they follow the name's trailing slash (`src/#说明`). */
+const SLASH_NOTE_MARKERS = new Set([...'#＃:：;；=＝|｜·•*>＞/／\\-–—―'])
+/** Leading separator run dropped from a note; the rest of the note stays as written. */
+const NOTE_SEPARATORS = /^(?:[\s#＃:：;；=＝|｜·•*>＞\-–—―→➔➜➡⇒]|\/{2,})+/u
+/** Punctuation a name may carry before a spaced note (`Button.tsx: 按钮`). */
+const TRAILING_NAME_SEPARATORS = /[:：;；,，]+$/u
+
 /**
- * Split one tree entry label at its `#` annotation marker.
+ * Index where an entry's note starts, or -1 when the label is all name.
  *
- * A marker is a `#` (or full-width `＃`) that follows whitespace or the name's
- * trailing `/`, so a name that merely contains one (`C#/`, `note#1.md`) keeps
- * it. Leading markers and whitespace of the annotation are dropped, and a bare
- * marker leaves no note.
+ * The first whitespace ends the name, so `src/ 源码目录` and `src/ # 源码`
+ * split alike. A note may also start with no whitespace at a marker that
+ * cannot be part of a name (`src/→说明`, `src/：说明`) or right after the
+ * name's trailing slash (`src/#说明`); a `#` inside a name (`C#/`) or a drive
+ * colon (`C:/`) therefore survives.
+ * @param label - one entry's first-line plain text.
+ * @returns the split offset, or -1 for a label with no note.
+ */
+function noteCutIndex(label: string): number {
+  for (let index = 1; index < label.length; index++) {
+    const char = label[index]!
+    if (NOTE_SPACE.test(char)) return index
+    if (ATTACHED_NOTE_MARKERS.has(char)) return index
+    if (label[index - 1] === '/' && SLASH_NOTE_MARKERS.has(char)) return index
+  }
+  return -1
+}
+
+/**
+ * Split one tree entry label into its name and an optional note.
+ *
+ * The name is the text before the note cut; everything after it is the note,
+ * whatever it starts with. A leading run of separator symbols (`#`, `:`, `-`,
+ * `→`, `|`, `·`, …) is dropped from the note and the remaining text is kept
+ * verbatim, so `src/ → 源码` and `src/ # 源码` both annotate as `源码`.
  * @param label - one entry's first-line plain text.
  * @returns the entry name and its note; the note is undefined when absent.
  */
 function splitTreeLabel(label: string): { name: string; note: string | undefined } {
-  const marker = /[ \t\u3000/][#＃]+[ \t]*/u.exec(label)
-  if (marker === null) return { name: label, note: undefined }
-  const boundary = marker.index + (marker[0].startsWith('/') ? 1 : 0)
-  const name = label.slice(0, boundary).trimEnd()
+  const cut = noteCutIndex(label)
+  if (cut === -1) return { name: label, note: undefined }
+  const name = label.slice(0, cut).replace(TRAILING_NAME_SEPARATORS, '').trimEnd()
   // A marker with no name in front of it is content, not an annotation.
   if (name === '') return { name: label, note: undefined }
-  const note = label.slice(marker.index + marker[0].length).trim()
+  const note = label.slice(cut).replace(NOTE_SEPARATORS, '').trim()
   return { name, note: note === '' ? undefined : note }
 }
 

@@ -113,7 +113,7 @@ Use: one ordered progression of stages, steps, milestones, or experiences, each 
 
 ### tree
 
-Use: files and directories. Syntax: a nested unordered list; folders end with `/`; several top-level items are several roots. End an entry's line with `# note` to annotate it: the renderer strips the `#` and sets the note in one shared, left-aligned column. The renderer adds icons and folding; write the structure only.
+Use: files and directories. Syntax: a nested unordered list; folders end with `/`; several top-level items are several roots. Text after an entry's name annotates it: the renderer drops a leading `#`, `→`, or `:` and sets the rest in one shared, left-aligned column. The renderer adds icons and folding; write the structure only.
 
 <example>
 ```tree
@@ -121,7 +121,7 @@ Use: files and directories. Syntax: a nested unordered list; folders end with `/
   - components/  # UI components
     - Button.tsx
   - index.ts
-- package.json  # deps and scripts
+- package.json  deps and scripts
 ```
 </example>
 

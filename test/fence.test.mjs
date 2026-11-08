@@ -86,6 +86,39 @@ test('tree: `#` inside a name stays in the name', () => {
   assert.equal(parseTreeFence('- note#1.md')[0].note, undefined)
 })
 
+test('tree: any trailing text is the note; separator symbols are dropped', () => {
+  // No marker at all: the first whitespace ends the name.
+  const trees = parseTreeFence('- src/ 源码目录\n  - index.ts 入口\n- package.json 依赖与脚本')
+  assert.equal(trees?.[0].name, 'src/')
+  assert.equal(trees?.[0].note, '源码目录')
+  assert.equal(trees?.[0].folder, true)
+  assert.equal(trees?.[0].children[0].note, '入口')
+  assert.equal(trees?.[1].note, '依赖与脚本')
+  // A separator run of any shape is dropped from the note's start; the rest of
+  // the note is kept verbatim, including symbols that are content.
+  const cases = [
+    ['- a/ → 说明', '说明'],
+    ['- a/→说明', '说明'],
+    ['- a/：说明', '说明'],
+    ['- a/ // 说明', '说明'],
+    ['- a/ — 说明', '说明'],
+    ['- a/ | 说明', '说明'],
+    ['- a/ ## 说明', '说明'],
+    ['- a/ ★ 重点', '★ 重点'],
+    ['- a/ 「说明」', '「说明」'],
+    ['- a/ 说明：细节', '说明：细节'],
+    ['- a/ （补充）', '（补充）'],
+    ['- Button.tsx: 按钮', '按钮'],
+  ]
+  for (const [line, note] of cases) assert.equal(parseTreeFence(line)[0].note, note, line)
+  assert.equal(parseTreeFence('- Button.tsx: 按钮')[0].name, 'Button.tsx')
+  // A bare separator annotates nothing and leaves the name clean.
+  assert.deepEqual(parseTreeFence('- a/ →'), [{ name: 'a/', folder: true, note: undefined, children: [] }])
+  // Drive colons and dotted names never split on their own.
+  assert.equal(parseTreeFence('- C:/ 系统盘')[0].name, 'C:/')
+  assert.equal(parseTreeFence('- C:/ 系统盘')[0].note, '系统盘')
+})
+
 test('todo: heading or paragraph title, flat GFM tasks; colon split matches the auto rule', () => {
   const seg = parseTodoFence('### 行程计划\n- [ ] 订机票：周二前确认\n- [ ] 订酒店\n- [x] 确认签证')
   assert.equal(seg.title, '行程计划')

@@ -633,7 +633,7 @@ test('tree renders `#` annotations as one left-aligned note column', () => {
         status: 'settled',
         turn: 1,
         step: 1,
-        blocks: [{ kind: 'text', text: '```tree\n- src/  # 源码目录\n  - index.ts # 入口\n- package.json\n```\n' }],
+        blocks: [{ kind: 'text', text: '```tree\n- src/  # 源码目录\n  - index.ts 入口\n- package.json → 依赖与脚本\n```\n' }],
         time: 0,
       },
       location: { kind: 'turn', turn: { turn: 1, status: 'open' } },
@@ -652,8 +652,8 @@ test('tree renders `#` annotations as one left-aligned note column', () => {
   const names = ofClass('dshr-tree-name')
   assert.deepEqual(names.map(name => name.props.children), ['src/', 'index.ts', 'package.json'])
   const notes = ofClass('dshr-tree-note')
-  assert.deepEqual(notes.map(note => note.props.children), ['源码目录', '入口'])
-  assert.deepEqual(notes.map(note => note.props.title), ['源码目录', '入口'])
+  assert.deepEqual(notes.map(note => note.props.children), ['源码目录', '入口', '依赖与脚本'])
+  assert.deepEqual(notes.map(note => note.props.title), ['源码目录', '入口', '依赖与脚本'])
   // Depth rides on the row for the guide lines and on aria-level for the tree.
   const rows = ofClass('dshr-tree-row')
   assert.deepEqual(rows.map(row => row.props['aria-level']), [1, 2, 1])
