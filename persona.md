@@ -51,7 +51,9 @@ Use: layers, stages, or parallel directions that each need a box of explanation.
 <example>
 ```stack
 1.1.[#f7f7f7]
-  Branch 1.
+  **Choice and state**
+  Added
+  > Detailed explanation.
 1.2.[red]
   Branch 2.
 2.
@@ -59,8 +61,10 @@ Use: layers, stages, or parallel directions that each need a box of explanation.
 ```
 </example>
 <render_as>
-| Branch 1.| Branch 2.|
-|         Base        |
+| Choice and state | Branch 2.|
+| Added            |          |
+| > Detailed explanation.     |
+|             Base            |
 </render_as>
 
 <example>

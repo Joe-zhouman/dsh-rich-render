@@ -9,7 +9,7 @@
 | 项 | 值 |
 |---|---|
 | 包名 | `dsh-rich-render` |
-| 版本 | `0.9.37`（`private`，不发布） |
+| 版本 | `0.9.38`（`private`，不发布） |
 | 类型 | host + client bundle（`dsh.client.platform: web`，自带 `dsh.bundle.patch`） |
 | 宿主半区入口 | `lib/index.js`（由 `index.mjs` 构建；预构建产物随仓库提交） |
 | 浏览器半区入口 | `lib/client.js`（CJS factory，预构建产物随仓库提交） |
@@ -286,6 +286,10 @@ spec 设想独立 channel `/rich-render`。实际：自定义 channel 的 `rpc.h
 ## 修订记录（2026-10-25，v0.2.1）
 
 persona.md 措辞修订（用户编辑，无代码改动，测试 108/108 仍绿）：富渲染总则改为「解释论证默认连贯段落」，收紧原生无序列表与有序列表的使用条件；stack 用途扩展为「同一阶段内多个方向或方案的分组说明」并写明与多级列表的取舍（回应上面"stack 未被自发使用"观察项）；「选择」节从条目列表改为连贯段落。persona 为运行时资产，宿主启动时一次性读入。desktop profile 已 remove+add 刷新至 0.2.1（运行中的桌面端重启后生效）；web profile 仍装 0.2.0（persona 为旧版），需要时同法刷新。
+
+## 修订记录（2026-11-08，v0.9.38）
+
+用户反馈 persona 的 stack 示例只有裸文字（`Branch 1.` / `Branch 2.` / `Base`），模型因此很少在 box 里用 Markdown，也就不太把 stack 用在并列关系上。改法：第一个 stack 示例的第一个 box 换成带 Markdown 的并列卡片——`**Choice and state**` / `Added` / `> Detailed explanation.`（用户给的「`**选择与状态**` / `新增` / `> [详细说明]。`」的英文版），`<render_as>` 同步成对应形状；第二个网格示例不动。解析与渲染无改动（box 内容本来就按 Markdown 渲染，见 stack 节的「box 内容按 Markdown 渲染」一条），测试 179 项仍绿。两 profile 的 `persona.md` 与 `package.json` 已同步（`lib/` 未变，无需重建），桌面端完全退出重开生效。
 
 ## 修订记录（2026-11-08，v0.9.37）
 
