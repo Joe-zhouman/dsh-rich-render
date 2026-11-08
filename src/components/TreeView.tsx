@@ -1,14 +1,18 @@
 /**
  * Tree: the explicit `tree` fence as a vertical indented forest with guide
  * lines, collapsible folders (default expanded, component-local state), and
- * Material Icon Theme file/folder glyphs (curated inline copy). Long names
- * scroll horizontally and show the full name on hover.
+ * Material Icon Theme file/folder glyphs (curated inline copy). An entry's
+ * `#` annotation renders as a note in one shared left-aligned column, so the
+ * notes line up across depths instead of trailing each name.
  */
 
 import { useState } from 'react'
 import { fileIcon, folderIcon } from '../rules/tree-icons.ts'
 import type { TreeIcon } from '../rules/tree-icons.ts'
 import type { TreeEntrySpec, TreeSegment } from '../rules/segments.ts'
+
+/** One indent step per level; matches the 23px guide-line period in styles.ts. */
+const INDENT = 23
 
 /** One material glyph: 16x16 filled paths at native VS Code size. */
 function TreeGlyph({ icon }: { icon: TreeIcon }) {
@@ -19,10 +23,11 @@ function TreeGlyph({ icon }: { icon: TreeIcon }) {
   )
 }
 
-/** One row: icon plus name; folders toggle their children. */
-function Row({ entry, path, expanded, toggle }: {
+/** One row: icon plus name plus optional note; folders toggle their children. */
+function Row({ entry, path, depth, expanded, toggle }: {
   entry: TreeEntrySpec
   path: string
+  depth: number
   expanded: ReadonlySet<string>
   toggle: (path: string): void
 }) {
@@ -31,21 +36,32 @@ function Row({ entry, path, expanded, toggle }: {
   const name = entry.name.replace(/\/$/u, '')
   return (
     <>
-      <div className="dshr-tree-row" role="treeitem" aria-expanded={entry.folder ? open : undefined}>
-        {entry.folder
-          ? (
-            <button type="button" className="dshr-tree-toggle" onClick={() => toggle(key)}>
-              {open ? '▾' : '▸'}
-            </button>
-          )
-          : <span className="dshr-tree-toggle" aria-hidden />}
-        <TreeGlyph icon={entry.folder ? folderIcon(name, open) : fileIcon(name)} />
-        <span className="dshr-tree-name" title={entry.name}>{entry.name}</span>
+      <div
+        className="dshr-tree-row"
+        role="treeitem"
+        aria-level={depth + 1}
+        aria-expanded={entry.folder ? open : undefined}
+      >
+        <div className="dshr-tree-main" style={{ paddingLeft: depth * INDENT }}>
+          <span className="dshr-tree-guides" style={{ width: depth * INDENT }} aria-hidden />
+          {entry.folder
+            ? (
+              <button type="button" className="dshr-tree-toggle" onClick={() => toggle(key)}>
+                {open ? '▾' : '▸'}
+              </button>
+            )
+            : <span className="dshr-tree-toggle" aria-hidden />}
+          <TreeGlyph icon={entry.folder ? folderIcon(name, open) : fileIcon(name)} />
+          <span className="dshr-tree-name" title={entry.name}>{entry.name}</span>
+        </div>
+        {entry.note === undefined
+          ? null
+          : <span className="dshr-tree-note" title={entry.note}>{entry.note}</span>}
       </div>
       {entry.folder && open && entry.children.length > 0 && (
         <div className="dshr-tree-children" role="group">
           {entry.children.map((child, index) => (
-            <Row key={index} entry={child} path={key} expanded={expanded} toggle={toggle} />
+            <Row key={index} entry={child} path={key} depth={depth + 1} expanded={expanded} toggle={toggle} />
           ))}
         </div>
       )}
@@ -86,7 +102,7 @@ export function TreeView({ segment }: TreeViewProps) {
   return (
     <div className="dshr-tree dshr-fence" role="tree">
       {segment.trees.map((entry, index) => (
-        <Row key={index} entry={entry} path="" expanded={expanded} toggle={toggle} />
+        <Row key={index} entry={entry} path="" depth={0} expanded={expanded} toggle={toggle} />
       ))}
     </div>
   )

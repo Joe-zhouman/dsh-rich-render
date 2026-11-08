@@ -605,6 +605,68 @@ test('mindmap renders bare nodes, a root pill, branch colors, and bump-edge hook
   assert.match(sheet, /\.dshr-mm-root[\s\S]*?border-radius: 999px;/u)
 })
 
+test('tree renders `#` annotations as one left-aligned note column', () => {
+  assert.equal(buildOnce().status, 0, 'the artifact is only judged from a successful build')
+  const { react, jsxRuntime } = stubReact()
+  const { loaded, dom } = loadClient({
+    'react': react,
+    'react/jsx-runtime': jsxRuntime,
+    '@deepseek-ai/dsh-client-ui-primitives': PRIMITIVES,
+  })
+  const registrations = []
+  const ctx = {
+    slots: {
+      inject(name, factory) { factory() },
+      register(options, component) { registrations.push({ options, component }); return () => {} },
+    },
+    effect(factory) { factory(); return () => {} },
+    locale: { register: () => () => {} },
+    connection: { rpc: {} },
+    theme: { overrideTokens: () => () => {} },
+  }
+  loaded.exports.apply(ctx)
+  const View = registrations[0].component
+  const element = View({
+    node: {
+      kind: 'assistant-step',
+      data: {
+        status: 'settled',
+        turn: 1,
+        step: 1,
+        blocks: [{ kind: 'text', text: '```tree\n- src/  # 源码目录\n  - index.ts # 入口\n- package.json\n```\n' }],
+        time: 0,
+      },
+      location: { kind: 'turn', turn: { turn: 1, status: 'open' } },
+    },
+    useDisclosure: () => ({ expanded: false, setExpanded: () => {}, toggle: () => {} }),
+    useTurnData: () => undefined,
+    openFile: () => {},
+    renderMessageImages: () => null,
+    fileMentions: () => undefined,
+    t: key => key,
+  }, react)
+  const tree = renderStub(element)
+  const ofClass = className => collectStub(tree, node =>
+    String(node.props?.className ?? '').split(' ').includes(className))
+  // The marker never reaches a name; each annotation is its own element.
+  const names = ofClass('dshr-tree-name')
+  assert.deepEqual(names.map(name => name.props.children), ['src/', 'index.ts', 'package.json'])
+  const notes = ofClass('dshr-tree-note')
+  assert.deepEqual(notes.map(note => note.props.children), ['源码目录', '入口'])
+  assert.deepEqual(notes.map(note => note.props.title), ['源码目录', '入口'])
+  // Depth rides on the row for the guide lines and on aria-level for the tree.
+  const rows = ofClass('dshr-tree-row')
+  assert.deepEqual(rows.map(row => row.props['aria-level']), [1, 2, 1])
+  assert.deepEqual(ofClass('dshr-tree-main').map(main => main.props.style.paddingLeft), [0, 23, 0])
+  assert.deepEqual(ofClass('dshr-tree-guides').map(guide => guide.props.style.width), [0, 23, 0])
+  // The note column is a shared grid track, so notes align across depths.
+  const sheet = dom.window.document.querySelector('style[data-plugin-css="dsh-rich-render/styles"]').textContent
+  assert.match(sheet, /\.dshr-tree \{[\s\S]*?grid-template-columns: max-content max-content;/u)
+  assert.match(sheet, /\.dshr-tree-row \{[\s\S]*?grid-template-columns: subgrid;/u)
+  assert.match(sheet, /\.dshr-tree-note \{[\s\S]*?font-size: 12px;/u)
+  assert.match(sheet, /\.dshr-tree-children \{\s*display: contents;\s*\}/u)
+})
+
 test('prototype choices render radio options and a live showcase', async () => {
   assert.equal(buildOnce().status, 0, 'the artifact is only judged from a successful build')
   const { react, jsxRuntime } = stubReact()

@@ -113,15 +113,15 @@ Use: one ordered progression of stages, steps, milestones, or experiences, each 
 
 ### tree
 
-Use: files and directories. Syntax: a nested unordered list; folders end with `/`; several top-level items are several roots. The renderer adds icons and folding; write the structure only.
+Use: files and directories. Syntax: a nested unordered list; folders end with `/`; several top-level items are several roots. End an entry's line with `# note` to annotate it: the renderer strips the `#` and sets the note in one shared, left-aligned column. The renderer adds icons and folding; write the structure only.
 
 <example>
 ```tree
 - src/
-  - components/
+  - components/  # UI components
     - Button.tsx
   - index.ts
-- package.json
+- package.json  # deps and scripts
 ```
 </example>
 

@@ -135,12 +135,33 @@ function paragraphRootedMindmap(body: string): MindmapNodeSpec[] | undefined {
   return trees
 }
 
+/**
+ * Split one tree entry label at its `#` annotation marker.
+ *
+ * A marker is a `#` (or full-width `＃`) that follows whitespace or the name's
+ * trailing `/`, so a name that merely contains one (`C#/`, `note#1.md`) keeps
+ * it. Leading markers and whitespace of the annotation are dropped, and a bare
+ * marker leaves no note.
+ * @param label - one entry's first-line plain text.
+ * @returns the entry name and its note; the note is undefined when absent.
+ */
+function splitTreeLabel(label: string): { name: string; note: string | undefined } {
+  const marker = /[ \t\u3000/][#＃]+[ \t]*/u.exec(label)
+  if (marker === null) return { name: label, note: undefined }
+  const boundary = marker.index + (marker[0].startsWith('/') ? 1 : 0)
+  const name = label.slice(0, boundary).trimEnd()
+  // A marker with no name in front of it is content, not an annotation.
+  if (name === '') return { name: label, note: undefined }
+  const note = label.slice(marker.index + marker[0].length).trim()
+  return { name, note: note === '' ? undefined : note }
+}
+
 /** Tree entries with node/depth accounting; undefined exceeds a cap or hits a bad shape. */
 function treeEntries(list: List, depth: number, budget: { count: number }): TreeEntrySpec[] | undefined {
   if (depth > TREE_MAX_DEPTH) return undefined
   const entries: TreeEntrySpec[] = []
   for (const item of list.children) {
-    const name = itemLabel(item)
+    const { name, note } = splitTreeLabel(itemLabel(item))
     const childLists: List[] = []
     for (const child of item.children) {
       if (child.type === 'list') childLists.push(child)
@@ -156,7 +177,7 @@ function treeEntries(list: List, depth: number, budget: { count: number }): Tree
         children = children.concat(parsed)
       }
     }
-    entries.push({ name, folder: name.endsWith('/') || children.length > 0, children })
+    entries.push({ name, folder: name.endsWith('/') || children.length > 0, note, children })
   }
   return entries
 }
@@ -165,7 +186,8 @@ function treeEntries(list: List, depth: number, budget: { count: number }): Tree
  * `tree` fence body: nested lists as a file forest (multiple roots).
  * @param body - code-block content.
  * @returns the entries, or undefined outside 500 nodes / 12 levels or on any
- * non-list shape. Tolerated deviations: ordered markers and task checkboxes.
+ * non-list shape. Tolerated deviations: ordered markers, task checkboxes, and
+ * a `#` annotation after a name (it becomes the entry's note, not its name).
  */
 export function parseTreeFence(body: string): TreeEntrySpec[] | undefined {
   const lists = fenceLists(body, true)

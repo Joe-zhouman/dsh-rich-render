@@ -149,6 +149,8 @@ export interface TreeEntrySpec {
   readonly name: string
   /** A folder ends with `/` or carries children. */
   readonly folder: boolean
+  /** Annotation after the entry's `#` marker, without the marker; undefined for none. */
+  readonly note: string | undefined
   readonly children: readonly TreeEntrySpec[]
 }
 

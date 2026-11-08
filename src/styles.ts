@@ -1082,19 +1082,45 @@ body[data-ds-dark-theme] .dshr-mm-b4 { --dshr-mm-branch: #a78bfa; }
 }
 
 /* ---- Tree fence ---- */
+/* Two shared columns: entry rows and their # notes. Both are max-content,
+   so the note column starts where the widest entry ends and every note in the
+   forest lines up on one left edge, whatever its depth. */
 .dshr-tree {
+  display: grid;
+  grid-template-columns: max-content max-content;
+  justify-content: start;
   padding: 10px 12px;
   overflow-x: auto;
   font-size: 13px;
 }
 
 .dshr-tree-row {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+  align-items: center;
+  padding: 2px 0;
+  white-space: nowrap;
+}
+
+.dshr-tree-main {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 2px 0;
-  white-space: nowrap;
-  min-width: max-content;
+}
+
+/* One guide line per ancestor level, sized inline by the row's depth. The
+   nested children wrapper is display: contents so rows share the grid
+   columns, which leaves no element to carry the old group border. The 23px
+   period matches INDENT in TreeView.tsx. */
+.dshr-tree-guides {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: -1;
+  background-image: repeating-linear-gradient(to right, transparent 0 14px, var(--dsw-alias-border-l1) 14px 15px, transparent 15px 23px);
 }
 
 .dshr-tree-toggle {
@@ -1111,13 +1137,17 @@ body[data-ds-dark-theme] .dshr-mm-b4 { --dshr-mm-branch: #a78bfa; }
 }
 
 .dshr-tree-children {
-  margin-left: 14px;
-  padding-left: 8px;
-  border-left: 1px solid var(--dsw-alias-border-l1);
+  display: contents;
 }
 
 .dshr-tree-name {
   color: var(--dsw-alias-label-primary);
+}
+
+.dshr-tree-note {
+  padding-left: 20px;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
 }
 
 .dshr-tree-icon {

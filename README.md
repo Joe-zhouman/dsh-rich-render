@@ -9,7 +9,7 @@
 | 项 | 值 |
 |---|---|
 | 包名 | `dsh-rich-render` |
-| 版本 | `0.9.33`（`private`，不发布） |
+| 版本 | `0.9.36`（`private`，不发布） |
 | 类型 | host + client bundle（`dsh.client.platform: web`，自带 `dsh.bundle.patch`） |
 | 宿主半区入口 | `lib/index.js`（由 `index.mjs` 构建；预构建产物随仓库提交） |
 | 浏览器半区入口 | `lib/client.js`（CJS factory，预构建产物随仓库提交） |
@@ -67,7 +67,7 @@
 cd L:/dsh/.local-deploy/rich-render-plugin
 pnpm install        # 依赖：mdast 解析层 + react 类型（构建期）
 pnpm run build      # tsdown 双 pass：lib/index.js（host 空 apply）+ lib/client.js（CJS factory）
-pnpm test           # node --test + 类型剥离：161 项（规则/清单/图表决策/路径图片兜底/golden set/水印配置/构建产物）
+pnpm test           # node --test + 类型剥离：178 项（规则/清单/图表决策/路径图片兜底/golden set/水印配置/构建产物）
 ```
 
 装机见 [INSTALL.md](INSTALL.md)：桌面端应用内安装、web 的 `dsh plugin add`、file: 依赖、matplotlib 配置、验证与卸载都在那里。本机 web/desktop 两个 profile 已用 file: 依赖装好。
@@ -181,6 +181,7 @@ v2 已上线：行数 2~550（实现容差）、纯数字正则（含科学计�
 ### tree（文件/目录树）
 
 - 围栏 `tree`，内容只接受嵌套无序列表；多个顶层项 = 多个根，按森林渲染，不要求单一根。
+- 注释：条目行末写 `# 说明`（全角 `＃`、连写 `##`、`名字/# 说明` 都容忍），渲染时剥掉 `#`，说明文字进一列所有条目共享、左对齐的注释列（12px、`label-secondary`）；名字里本来就有的 `#`（`C#/`、`note#1.md`）留在名字里。文件夹判定在剥注释之后进行，所以 `- src/  # 源码` 仍是文件夹。
 - 文件夹判定：名称以 `/` 结尾，或该节点有子节点；空文件夹也允许。文件按扩展名和特殊文件名取图标。
 - 渲染：纵向缩进树 + 层级引导线；文件夹可折叠，默认展开；折叠状态是组件本地状态，不写回会话。
 - 图标：对齐 VS Code Material Icon Theme（material-extensions/vscode-material-icon-theme，MIT）——关联规则取自其 fileIcons/folderIcons 清单，图标以 16×16 填充路径内联（策展子集：120 扩展名 + 58 特殊文件名 + 54 文件夹名，167 枚图标 ≈ 89KB，含默认 file/folder/folder-open 与每个特殊文件夹的 open 变体——open 变体按其构建管线同款做法，把 folder 体的 d 换成规范 open 路径合成）。渐变图标（kotlin/graphql 等 14 枚）与其关联一并跳过，回落相邻规则或通用图标。数据由 `extract-material-icons.mjs` 从浅克隆 `material-icon-theme-src/`（保留在盘，供再生）生成到 `src/rules/material-icons.generated.ts`；未覆盖的名字走通用文档图标。v0.7.0 起生效，取代 v0.1 的小集合单色徽章。
@@ -285,6 +286,10 @@ spec 设想独立 channel `/rich-render`。实际：自定义 channel 的 `rpc.h
 ## 修订记录（2026-10-25，v0.2.1）
 
 persona.md 措辞修订（用户编辑，无代码改动，测试 108/108 仍绿）：富渲染总则改为「解释论证默认连贯段落」，收紧原生无序列表与有序列表的使用条件；stack 用途扩展为「同一阶段内多个方向或方案的分组说明」并写明与多级列表的取舍（回应上面"stack 未被自发使用"观察项）；「选择」节从条目列表改为连贯段落。persona 为运行时资产，宿主启动时一次性读入。desktop profile 已 remove+add 刷新至 0.2.1（运行中的桌面端重启后生效）；web profile 仍装 0.2.0（persona 为旧版），需要时同法刷新。
+
+## 修订记录（2026-11-08，v0.9.36）
+
+用户要求把模型在 tree 围栏里自发写的行末注释（`- src/  # 源码目录`）做成正式写法，并把注释单独渲染：去掉 `#`、注释文字更好看、所有注释左对齐。此前 `#` 连同说明一起算进条目名，名字里出现 `#` 后 `src/` 不再以 `/` 结尾，文件夹判定失效、图标退化成通用文档。改法分三层。解析层：`fence.ts` 新增 `splitTreeLabel`，在名字之后的 `#`（全角 `＃`、连写 `##`、`名字/# 说明` 都接受；`C#/`、`note#1.md` 这类名字内部的 `#` 不受影响）处切开，`TreeEntrySpec` 新增 `note`，文件夹判定改用剥掉注释后的名字。渲染层：`TreeView` 把每行拆成「名字单元 + 注释单元」，`dshr-tree` 改成两列 `max-content` 的 CSS grid（`dshr-tree-row` 用 `grid-template-columns: subgrid` 继承同一组列），注释列因此从「最宽条目」处开始、整棵树所有注释共用同一条左边缘；注释 12px、`label-secondary`、左内边距 20px、带 `title` 悬停全文，行上补 `aria-level`。层级引导线随嵌套结构一并改造：子级容器改为 `display: contents`（行必须成为同一 grid 的项才能共享列），旧的 `border-left` 无处可挂，改由每行一个 `dshr-tree-guides` 绝对定位层按深度画 `repeating-linear-gradient`（每级 23px，与原 `14+8+1` 缩进一致），观感不变。persona 的 tree 节教 `# note` 写法并给出带注释的示例。测试 175 → 178（注释拆分、名字内 `#` 保留、bare marker、全角/连写/斜杠形态，加一条构建产物渲染断言：名字不含 `#`、注释独立成元素、`aria-level` 与深度一致、样式表带两列 grid 与 12px 注释规则）。两 profile 已刷（lib 哈希与源一致、persona 已同步），桌面端完全退出重开、web 刷新生效。预览对比图 `tree-before-light.png` / `tree-after-light.png` / `tree-after-dark.png`（部署目录，`.preview-choices/tree.mjs` 生成，before 页固定读 `HEAD` 的样式表）。
 
 ## 修订记录（2026-11-06，v0.9.33）
 

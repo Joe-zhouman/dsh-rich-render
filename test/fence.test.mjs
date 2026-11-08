@@ -58,7 +58,32 @@ test('tree: 12 levels accepted, 13 rejected; 500 nodes accepted, 501 rejected', 
 
 test('tree: prose rejected; task checkboxes tolerated as plain names', () => {
   assert.equal(parseTreeFence('说明'), undefined)
-  assert.deepEqual(parseTreeFence('- [ ] a'), [{ name: 'a', folder: false, children: [] }])
+  assert.deepEqual(parseTreeFence('- [ ] a'), [{ name: 'a', folder: false, note: undefined, children: [] }])
+})
+
+test('tree: `#` after a name becomes that entry\'s note, not part of the name', () => {
+  const trees = parseTreeFence('- src/  # 源码目录\n  - index.ts # 入口\n- package.json\n- empty/')
+  assert.equal(trees?.[0].name, 'src/')
+  assert.equal(trees?.[0].note, '源码目录')
+  assert.equal(trees?.[0].folder, true, 'the trailing slash still decides the folder')
+  assert.equal(trees?.[0].children[0].name, 'index.ts')
+  assert.equal(trees?.[0].children[0].note, '入口')
+  assert.equal(trees?.[1].note, undefined)
+  // The marker tolerates full-width `#`, repeated markers, and no space after it.
+  assert.equal(parseTreeFence('- a/  ＃ 全角')[0].note, '全角')
+  assert.equal(parseTreeFence('- a/ ## 重复')[0].note, '重复')
+  assert.equal(parseTreeFence('- a/ #紧贴')[0].note, '紧贴')
+  assert.equal(parseTreeFence('- a/# 斜杠后')[0].note, '斜杠后')
+  assert.equal(parseTreeFence('- a/# 斜杠后')[0].name, 'a/')
+  // A bare marker annotates nothing and leaves the name clean.
+  assert.deepEqual(parseTreeFence('- a/ #'), [{ name: 'a/', folder: true, note: undefined, children: [] }])
+})
+
+test('tree: `#` inside a name stays in the name', () => {
+  assert.equal(parseTreeFence('- C#/')[0].name, 'C#/')
+  assert.equal(parseTreeFence('- C#/')[0].note, undefined)
+  assert.equal(parseTreeFence('- note#1.md')[0].name, 'note#1.md')
+  assert.equal(parseTreeFence('- note#1.md')[0].note, undefined)
 })
 
 test('todo: heading or paragraph title, flat GFM tasks; colon split matches the auto rule', () => {
