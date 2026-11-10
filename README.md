@@ -9,7 +9,7 @@
 | 项 | 值 |
 |---|---|
 | 包名 | `dsh-rich-render` |
-| 版本 | `0.9.38`（`private`，不发布） |
+| 版本 | `0.9.39`（`private`，不发布） |
 | 类型 | host + client bundle（`dsh.client.platform: web`，自带 `dsh.bundle.patch`） |
 | 宿主半区入口 | `lib/index.js`（由 `index.mjs` 构建；预构建产物随仓库提交） |
 | 浏览器半区入口 | `lib/client.js`（CJS factory，预构建产物随仓库提交） |
@@ -286,6 +286,10 @@ spec 设想独立 channel `/rich-render`。实际：自定义 channel 的 `rpc.h
 ## 修订记录（2026-10-25，v0.2.1）
 
 persona.md 措辞修订（用户编辑，无代码改动，测试 108/108 仍绿）：富渲染总则改为「解释论证默认连贯段落」，收紧原生无序列表与有序列表的使用条件；stack 用途扩展为「同一阶段内多个方向或方案的分组说明」并写明与多级列表的取舍（回应上面"stack 未被自发使用"观察项）；「选择」节从条目列表改为连贯段落。persona 为运行时资产，宿主启动时一次性读入。desktop profile 已 remove+add 刷新至 0.2.1（运行中的桌面端重启后生效）；web profile 仍装 0.2.0（persona 为旧版），需要时同法刷新。
+
+## 修订记录（2026-11-09，v0.9.39）
+
+复盘 session-ff47286b（2026-11-09）：模型在 `prototype-choices` 外层用三反引号、选项示意里又嵌三反引号（` ```todo `/` ```stack `/` ```text `），Markdown 把外层围栏在第一个裸 ` ``` ` 行（` ```todo ` 的闭合行）提前闭合，截断后的 fence body 只剩一个选项，`parseTabFence` 低于 2 项下限返回 undefined，choices 分支走 `bodyNative()` 降级成原生 Markdown——choice 卡未渲染，`@` 选项落成素文本且未闭合内围栏把清单吞成代码块；孤儿 ` ```stack ` 块碰巧完整仍被升格。行为符合设计的静默降级，根因是模型违反 persona 已有的四反引号规则（该条当时在 Fences 总则与示例形态里，均被无视）。改法（零代码，仅 persona.md，用户选定）：Fences 总则的嵌套句与 prototype-choices 语法句各加一句条件式提醒——内容含代码围栏时外层必须比内层多一级反引号（` ```` ` 外、` ``` ` 内），同长不嵌套、三层加三层会在内层闭合行截断并整体降级。示例本身（` ```` ` 外层 + ` ```text `/` ```stack ` 内层）已是正确形态，未再添第三种内嵌围栏演示（控制注入预算）。解析、渲染与 lib 无改动；本沙箱内进程内跑测试 163/179 绿，16 项失败全部是 `build.test.mjs` 构建/宿主入口套件——其门禁要求跑通真实 `pnpm run build` 子进程，本会话沙箱 spawn 被拒，与 persona 无读取关系（`build.test.mjs` 不读 persona.md）。两 profile 的 `persona.md` 与 `package.json` 已直写同步至 0.9.39（lib/ 未变，无需重建）；persona 是宿主启动读取，需重启宿主才进新会话提示词。
 
 ## 修订记录（2026-11-08，v0.9.38）
 

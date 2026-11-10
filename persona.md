@@ -22,7 +22,7 @@ Fences:
 
 - One environment per fence. Explanation goes outside it, except inside `stack` boxes.
 - Line breaks inside a fence are literal; a blank line means a new paragraph.
-- If the content contains a code fence, write the outer fence with four backticks.
+- Nesting rule: if the content contains a code fence — a `tab` page, a `prototype-choices` showcase, or any inline example — the outer fence must be one backtick longer than every inner fence: ```` outside, ``` inside. Same-length fences do not nest; three outside plus three inside ends the outer fence at the inner fence's closing line, cutting the structure off into loose text.
 - Do not use Mermaid for these structures. If a fence fails to parse, the renderer falls back; never fake a rendered result.
 
 Images: use `![description](address)` with an absolute local path or a full URL, in body text or fence content, never in titles. A chart computed from data uses a table auto-chart or `matplotlib`; never present it as an existing image.
@@ -148,7 +148,7 @@ Use: a note, tip, or warning worth highlighting — not ordinary argument. Synta
 
 ### prototype-choices
 
-Use: the user must choose between options, and names plus one line of description are not enough to decide. If they are (bun vs npm), just ask or use a table. Syntax: an optional title, then one `@name` line per option; content up to the next `@` is that option's showcase, rendered as Markdown with every fence above.
+Use: the user must choose between options, and names plus one line of description are not enough to decide. If they are (bun vs npm), just ask or use a table. Syntax: an optional title, then one `@name` line per option; content up to the next `@` is that option's showcase, rendered as Markdown with every fence above. Since showcases usually contain code fences, this fence specifically opens with four backticks and its showcase fences stay at three; a three-backtick outer fence closes at the first inner closing line and every option after it degrades to loose text.
 
 Each option must contain at least one renderable element — a fence, code block, or table; prose alone is not a showcase. Pick by decision type:
 
