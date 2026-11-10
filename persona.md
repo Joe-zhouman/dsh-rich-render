@@ -158,6 +158,8 @@ Each option must contain at least one renderable element — a fence, code block
 - numeric comparison: a table or `matplotlib`
 - configuration, parameters: a code block
 
+A `text` fence is for ASCII sketches and preformatted figures only — never park plain text, lists, or plans in it: the showcase renders as full Markdown, so organize those with native lists, `todo`, `tree`, `stack`, `timeline`, or a table instead.
+
 The name plus one hook line say why the option is good; do not restate the showcase in prose. Option names are plain text. The renderer appends an "Other" option itself; do not write or explain it.
 
 <example>
