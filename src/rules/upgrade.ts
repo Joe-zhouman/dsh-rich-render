@@ -93,71 +93,226 @@ function checklistLeadTitle(node: BlockContent): string | undefined {
   return flattenChecklistTitle(parts.join('；'))
 }
 
-/** Explicit fences first: the model chose the structure, so they outrank every heuristic. */
-function matchFence(text: string, nodes: readonly BlockContent[], i: number): RuleMatch | undefined {
-  const code = nodes[i]
-  if (code?.type !== 'code') return undefined
-  const lang = code.lang?.trim().toLowerCase()
-  const body = code.value
-  const codeSpan = span(text, i, nodes)
-  if (codeSpan.start === -1) return undefined
-  const source = text.slice(codeSpan.start, codeSpan.end)
-  // mindmap/tree/todo/timeline/tab/choices degrade to their BODY as plain markdown
-  // (a list reads as a list); stack and matplotlib degrade to the fenced code
-  // block itself.
-  const bodyNative = (): RuleMatch => ({
-    segment: { kind: 'native', text: body, source },
-    start: i,
-    consume: 1,
-  })
+/** Fence languages whose blocks the paired-tag form also accepts. */
+const TAG_ENV_NAMES: ReadonlySet<string> = new Set([
+  'mindmap', 'stack', 'tab', 'timeline', 'tree', 'todo', 'prototype-choices', 'matplotlib',
+])
+
+/**
+ * Result of parsing one environment body: the upgraded segment carrying the
+ * caller's source slice, `'body'` when the fence form degrades to its body as
+ * native markdown, or undefined when the block stays native.
+ */
+type EnvironmentParse = UpgradeSegment | 'body' | undefined
+
+/**
+ * Parse one environment body under its fence language. Both the fence path and
+ * the paired-tag alias path route through here, so a tag block produces the
+ * same segment a fence would.
+ * @param lang - lowercased fence language of the block.
+ * @param body - raw markdown inside the fence or between the tags.
+ * @param source - exact source slice the segment owns.
+ * @returns the upgraded segment, the body-degradation marker, or undefined.
+ */
+function parseEnvironment(lang: string, body: string, source: string): EnvironmentParse {
   if (lang === 'mindmap') {
     const trees = parseMindmapFence(body)
-    if (trees === undefined) return bodyNative()
+    if (trees === undefined) return 'body'
     const segment: MindmapSegment = { kind: 'mindmap', source, trees }
-    return { segment, start: i, consume: 1 }
+    return segment
   }
   if (lang === 'tree') {
     const trees = parseTreeFence(body)
-    if (trees === undefined) return bodyNative()
+    if (trees === undefined) return 'body'
     const segment: TreeSegment = { kind: 'tree', source, trees }
-    return { segment, start: i, consume: 1 }
+    return segment
   }
   if (lang === 'todo') {
     const parsed = parseTodoFence(body)
-    if (parsed === undefined) return bodyNative()
+    if (parsed === undefined) return 'body'
     const segment: ChecklistSegment = { ...parsed, source }
-    return { segment, start: i, consume: 1 }
+    return segment
   }
   if (lang === 'timeline') {
     const parsed = parseTimelineFence(body)
-    if (parsed === undefined) return bodyNative()
+    if (parsed === undefined) return 'body'
     const segment: TimelineSegment = { ...parsed, source }
-    return { segment, start: i, consume: 1 }
+    return segment
   }
   if (lang === 'stack') {
     const layers = parseStackFence(body)
     if (layers === undefined) return undefined
     const segment: StackSegment = { kind: 'stack', source, layers }
-    return { segment, start: i, consume: 1 }
+    return segment
   }
   if (lang === 'tab') {
     const tabs = parseTabFence(body)
-    if (tabs === undefined) return bodyNative()
+    if (tabs === undefined) return 'body'
     const segment: TabSegment = { kind: 'tab', source, tabs }
-    return { segment, start: i, consume: 1 }
+    return segment
   }
   if (lang === 'prototype-choices') {
     const parsed = parseChoicesFence(body)
-    if (parsed === undefined) return bodyNative()
+    if (parsed === undefined) return 'body'
     const segment: ChoicesSegment = { ...parsed, source }
-    return { segment, start: i, consume: 1 }
+    return segment
   }
   if (lang === 'matplotlib') {
     if (body.trim() === '') return undefined
     const segment: MatplotlibSegment = { kind: 'matplotlib', source, code: body }
-    return { segment, start: i, consume: 1 }
+    return segment
   }
   return undefined
+}
+
+/** Explicit fences first: the model chose the structure, so they outrank every heuristic. */
+function matchFence(text: string, nodes: readonly BlockContent[], i: number): RuleMatch | undefined {
+  const code = nodes[i]
+  if (code?.type !== 'code') return undefined
+  const codeSpan = span(text, i, nodes)
+  if (codeSpan.start === -1) return undefined
+  const source = text.slice(codeSpan.start, codeSpan.end)
+  const parsed = parseEnvironment((code.lang ?? '').trim().toLowerCase(), code.value, source)
+  if (parsed === undefined) return undefined
+  // mindmap/tree/todo/timeline/tab/choices degrade to their BODY as plain markdown
+  // (a list reads as a list); stack and matplotlib degrade to the fenced code
+  // block itself.
+  const segment: UpgradeSegment = parsed === 'body' ? { kind: 'native', text: code.value, source } : parsed
+  return { segment, start: i, consume: 1 }
+}
+
+/** Opening tag of a paired-tag block: the tag alone on its line. */
+const TAG_OPEN = /^<([A-Za-z][A-Za-z0-9-]*)>[ \t]*$/u
+/** Closing tag of a paired-tag block: the tag alone on its line. */
+const TAG_CLOSE = /^<\/([A-Za-z][A-Za-z0-9-]*)>[ \t]*$/u
+/** Fence opener while scanning a body: 3+ backticks or tildes, indented up to 3 spaces. */
+const FENCE_OPEN = /^ {0,3}(`{3,}|~{3,})/u
+/** Fence closer: same character as its opener, at least as long, nothing else after. */
+const FENCE_CLOSE = /^ {0,3}(`{3,}|~{3,})[ \t]*$/u
+
+/** One paired-tag environment block located in a text block. */
+interface TagBlock {
+  /** Offset of the opening tag line's first character. */
+  readonly start: number
+  /** Offset just past the closing tag line's last character. */
+  readonly end: number
+  /** Lowercased environment name shared by both tags. */
+  readonly name: string
+  /** Source lines strictly between the tags, without their newlines. */
+  readonly body: string
+}
+
+/**
+ * Locate paired-tag environment blocks (`<stack>…</stack>`) at line starts,
+ * outside any fenced code block. The tag form is a tolerated alias the persona
+ * never teaches: the tags are markup to this renderer, so the block's exact
+ * source slice is kept for the native fallback while its body feeds the same
+ * parser as a fence. Unclosed tags and names outside the alias set are ignored,
+ * leaving the text untouched. Closing lines are indexed once, so the walk stays
+ * linear on hostile input instead of rescanning the tail per opening tag.
+ * @param text - complete markdown source of one text block.
+ * @returns non-overlapping blocks in source order.
+ */
+function findTagBlocks(text: string): readonly TagBlock[] {
+  const lines = text.split('\n')
+  const starts: number[] = []
+  let offset = 0
+  for (const line of lines) {
+    starts.push(offset)
+    offset += line.length + 1
+  }
+  const hidden = fenceLines(lines)
+  const closes = new Map<string, number[]>()
+  for (let i = 0; i < lines.length; i++) {
+    if (hidden[i] === true) continue
+    const close = TAG_CLOSE.exec(lines[i] ?? '')
+    if (close === null) continue
+    const name = close[1]!.toLowerCase()
+    if (!TAG_ENV_NAMES.has(name)) continue
+    const list = closes.get(name)
+    if (list === undefined) closes.set(name, [i])
+    else list.push(i)
+  }
+  const blocks: TagBlock[] = []
+  let i = 0
+  while (i < lines.length) {
+    if (hidden[i] === true) { i++; continue }
+    const open = TAG_OPEN.exec(lines[i] ?? '')
+    const name = open?.[1]?.toLowerCase()
+    if (open === null || name === undefined || !TAG_ENV_NAMES.has(name)) { i++; continue }
+    const close = nextIndex(closes.get(name), i)
+    if (close === undefined) { i++; continue }
+    blocks.push({
+      start: starts[i]!,
+      end: starts[close]! + (lines[close] ?? '').length,
+      name,
+      body: lines.slice(i + 1, close).join('\n'),
+    })
+    i = close + 1
+  }
+  return blocks
+}
+
+/**
+ * Mark the lines a fenced code block owns (its opener, body, and closer) so a
+ * tag-looking line inside an example fence is never read as a block delimiter.
+ * @param lines - the text block's lines.
+ * @returns one flag per line, true when the line belongs to a fence.
+ */
+function fenceLines(lines: readonly string[]): boolean[] {
+  const hidden = lines.map(() => false)
+  let fence: { readonly char: string; readonly length: number } | undefined
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i] ?? ''
+    if (fence !== undefined) {
+      hidden[i] = true
+      if (closesFence(line, fence)) fence = undefined
+      continue
+    }
+    const open = FENCE_OPEN.exec(line)
+    if (open !== null) {
+      hidden[i] = true
+      fence = { char: open[1]![0]!, length: open[1]!.length }
+    }
+  }
+  return hidden
+}
+
+/** Whether one line closes the currently open fenced code block. */
+function closesFence(line: string, fence: { readonly char: string; readonly length: number }): boolean {
+  const close = FENCE_CLOSE.exec(line)
+  return close !== null && close[1]![0] === fence.char && close[1]!.length >= fence.length
+}
+
+/**
+ * First index in a sorted line list greater than the opening tag's line.
+ * @param list - sorted closing-line indices for one environment name.
+ * @param after - opening tag's line index.
+ * @returns that index, or undefined when the block is unclosed.
+ */
+function nextIndex(list: readonly number[] | undefined, after: number): number | undefined {
+  if (list === undefined) return undefined
+  let low = 0
+  let high = list.length
+  while (low < high) {
+    const middle = (low + high) >> 1
+    if (list[middle]! <= after) low = middle + 1
+    else high = middle
+  }
+  return low < list.length ? list[low] : undefined
+}
+
+/**
+ * Render one paired-tag block through its environment parser, producing the
+ * exact segment a fence with the same body would produce. The span stays the
+ * original tag slice, so a component failure shows the text the model wrote.
+ * @param text - complete markdown source of one text block.
+ * @param block - one located tag block.
+ * @returns the upgraded segment, or undefined to leave the block native.
+ */
+function upgradeTagBlock(text: string, block: TagBlock): UpgradeSegment | undefined {
+  const parsed = parseEnvironment(block.name, block.body, text.slice(block.start, block.end))
+  return parsed === 'body' ? undefined : parsed
 }
 
 /**
@@ -419,6 +574,11 @@ const WALK_TEXT_MAX = 192 * 1024
  * Inputs past WALK_TEXT_MAX degrade whole-native BEFORE the mdast parse —
  * the parse itself is quadratic on hostile shapes, and the platform renderer
  * still draws the text exactly as it would without us.
+ *
+ * Paired-tag environment blocks are cut out first and rendered through the
+ * same environment parser the fences use; the markdown between them keeps the
+ * ordinary rule walk. The alias is never taught in the persona, so it only
+ * keeps an already-emitted tag block renderable.
  * @param text - complete markdown source of one text block.
  * @returns consecutive segments; native fallback covers the whole text.
  */
@@ -426,6 +586,35 @@ export function upgradeText(text: string): UpgradeSegment[] {
   if (text.length > WALK_TEXT_MAX) {
     return [{ kind: 'native', text, source: text }]
   }
+  let blocks: readonly TagBlock[]
+  try {
+    blocks = findTagBlocks(text)
+  } catch {
+    return [{ kind: 'native', text, source: text }]
+  }
+  if (blocks.length === 0) return upgradeMarkdown(text)
+  const out: UpgradeSegment[] = []
+  try {
+    let cursor = 0
+    for (const block of blocks) {
+      if (block.start > cursor) pushSegments(out, upgradeMarkdown(text.slice(cursor, block.start)))
+      const source = text.slice(block.start, block.end)
+      out.push(upgradeTagBlock(text, block) ?? { kind: 'native', text: source, source })
+      cursor = block.end
+    }
+    if (cursor < text.length) pushSegments(out, upgradeMarkdown(text.slice(cursor)))
+  } catch {
+    return [{ kind: 'native', text, source: text }]
+  }
+  return out.length === 0 ? [{ kind: 'native', text, source: text }] : out
+}
+
+/**
+ * Decide the layout of one markdown run with the ordinary rule walk.
+ * @param text - markdown source of one run.
+ * @returns consecutive segments; native fallback covers the run.
+ */
+function upgradeMarkdown(text: string): UpgradeSegment[] {
   let nodes: readonly BlockContent[]
   try {
     nodes = asBlockContent(parseBlocks(text))
@@ -473,6 +662,14 @@ export function upgradeText(text: string): UpgradeSegment[] {
   }
   if (out.length === 0) return [{ kind: 'native', text, source: text }]
   return out
+}
+
+/** Append the non-empty segments of one markdown run, dropping blank padding. */
+function pushSegments(out: UpgradeSegment[], segments: readonly UpgradeSegment[]): void {
+  for (const segment of segments) {
+    if (segment.kind === 'native' && segment.text.trim() === '') continue
+    out.push(segment)
+  }
 }
 
 /** View of the parser's root children the walk indexes over. */

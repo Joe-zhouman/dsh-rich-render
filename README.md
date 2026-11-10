@@ -9,7 +9,7 @@
 | 项 | 值 |
 |---|---|
 | 包名 | `dsh-rich-render` |
-| 版本 | `0.9.40`（`private`，不发布） |
+| 版本 | `0.9.41`（`private`，不发布） |
 | 类型 | host + client bundle（`dsh.client.platform: web`，自带 `dsh.bundle.patch`） |
 | 宿主半区入口 | `lib/index.js`（由 `index.mjs` 构建；预构建产物随仓库提交） |
 | 浏览器半区入口 | `lib/client.js`（CJS factory，预构建产物随仓库提交） |
@@ -44,6 +44,8 @@
 
 已退役的自动判定：多层级无序列表 → 思维导图（v0.2.0，改 `mindmap` 围栏）、阶段/Step/第X步/Phase 序列 → 时间线（v0.3.0，改 `timeline` 围栏）。相位标题有序列表不再让位时间线，随普通规则进卡片组。
 
+成对标签别名（v0.9.41）：助手消息里行首的 `<stack>`…`</stack>` 这类成对标签块按围栏处理——标签之间的内容喂同一套环境解析器，产出的升格段与同内容围栏完全一致，`source` 保留标签块原文（组件失败时回退显示模型写的标签文本）。标签名限 `mindmap` / `stack` / `tab` / `timeline` / `tree` / `todo` / `prototype-choices` / `matplotlib`（大小写不敏感），只在代码围栏外、整行行首时生效；未闭合、名字不在集合内或 body 解析失败时整块保持原生。persona 不教这种写法（提示词预算不变），它只是把模型已经写出来的标签块接住。
+
 本地路径图片兜底与图片卡（v0.9.8 起，v0.9.9 成型，v0.9.26 尺寸重做，v0.9.28 改比例上限）：正文段落里的裸绝对路径（`L:\out\pic.png`、`/home/u/pic.png`）与反引号包裹的同样路径，在 settle 后重写为标准图片语法；顶层段落里的图片（模型写的标准图片含在内）一律用空行拆成独立段落，永不与文字同行。每个独立图片段升格为**图片卡**：与其他围栏同款外框（1px border-l2 + 10px 圆角）、右上角「复制」按钮把图片光栅化为 PNG 写入系统剪贴板（跨域图或超大图复制失败时按钮显示失败）；目标不可解析或文件加载失败时卡片显示「图片无法预览 · 作者写的目标」，alt 只在悬停提示里。卡片宽度随图片（`width: fit-content`），图片按正文列宽显示，高度上限取所在列宽的 1.5 倍（A4 竖版是 297/210≈1.41，1.5 就是「比 A4 大一点」）——比例不超过 1.5 的竖图占满正文宽度，超过的才算超长、等比缩小，卡片跟着收窄。路径重写仅限图片扩展名（png/jpg/jpeg/gif/webp/bmp/svg/ico/avif）与绝对路径；列表项与表格内不拆段不重写（拆开会破坏容器），引用块内重写但不拆段；链接内、代码围栏、标题中的路径不动。
 
 清单（GFM 任务列表）的字段与交互：
@@ -67,7 +69,7 @@
 cd L:/dsh/.local-deploy/rich-render-plugin
 pnpm install        # 依赖：mdast 解析层 + react 类型（构建期）
 pnpm run build      # tsdown 双 pass：lib/index.js（host 空 apply）+ lib/client.js（CJS factory）
-pnpm test           # node --test + 类型剥离：179 项（规则/清单/图表决策/路径图片兜底/golden set/水印配置/构建产物）
+pnpm test           # node --test + 类型剥离：185 项（规则/清单/图表决策/路径图片兜底/golden set/水印配置/构建产物）
 ```
 
 装机见 [INSTALL.md](INSTALL.md)：桌面端应用内安装、web 的 `dsh plugin add`、file: 依赖、matplotlib 配置、验证与卸载都在那里。本机 web/desktop 两个 profile 已用 file: 依赖装好。
@@ -286,6 +288,10 @@ spec 设想独立 channel `/rich-render`。实际：自定义 channel 的 `rpc.h
 ## 修订记录（2026-10-25，v0.2.1）
 
 persona.md 措辞修订（用户编辑，无代码改动，测试 108/108 仍绿）：富渲染总则改为「解释论证默认连贯段落」，收紧原生无序列表与有序列表的使用条件；stack 用途扩展为「同一阶段内多个方向或方案的分组说明」并写明与多级列表的取舍（回应上面"stack 未被自发使用"观察项）；「选择」节从条目列表改为连贯段落。persona 为运行时资产，宿主启动时一次性读入。desktop profile 已 remove+add 刷新至 0.2.1（运行中的桌面端重启后生效）；web profile 仍装 0.2.0（persona 为旧版），需要时同法刷新。
+
+## 修订记录（2026-11-10，v0.9.41）
+
+复盘 session-798006dc（2026-11-10，opencode-go/deepseek-v4.1-flash）：模型把整块 `prototype-choices` 写成成对的 XML 标签——`<prototype-choices>` 起、`</prototype-choices>` 止，内部标题、`@` 选项与 yaml 代码围栏都完整——而不是 ` ````prototype-choices ` 围栏；解析器只认围栏，整块降级成字面文本，choice 卡没有渲染。用户决定：不在 persona 里纠正（提示词不加规则、也不教这种写法），把成对标签做成围栏的**容错别名**，在渲染层接住。改法（`src/rules/upgrade.ts`，persona.md 未动，仍 9168 字节）：`upgradeText` 在 mdast 解析前先扫出行首成对标签块——`<mindmap>` / `<stack>` / `<tab>` / `<timeline>` / `<tree>` / `<todo>` / `<prototype-choices>` / `<matplotlib>`，大小写不敏感，只在代码围栏外、整行行首时生效，块内围栏里的同名行不算标签；命中后把标签之间的原文喂给抽出的 `parseEnvironment`（与围栏路径共用同一个解析器），产出的 segment 与同内容围栏完全一致，`source` 仍是标签块的原始切片（组件失败回退时显示模型原文）；未闭合、名字不在集合内或 body 解析失败时整块保持原生，行为与今天一致。测试 179 → 185（新增：stack 标签块与围栏同形且 source 保留原文、prototype-choices 标签块的内层围栏仍归各选项、未知/未闭合标签保持原生、代码围栏内的标签文本不误判、无效 stack body 回退原生原文、多块按源序各升一段），非 build 163 → 169 项在默认沙箱内直跑全绿；`build.test.mjs` 的 16 项要启动 `pnpm run build` 子进程，默认沙箱拒绝、提权后 16/16 全绿——合计 185 项。另外用真实 payload 复跑：session-798006dc 的这条回复现在切出 native,table,native,choices,native 五段，标题「要落到哪一层」与三个选项名全部解析出来，choices 段的 source 首尾正是模型写的标签行。lib 已重建；两 profile 的 `lib/` 与 `package.json` 直写同步至 0.9.41（客户端半区刷新页面 / 重开桌面端生效；persona 未改，无需为提示词重启）。
 
 ## 修订记录（2026-11-09，v0.9.40）
 

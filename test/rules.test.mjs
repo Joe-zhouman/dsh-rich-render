@@ -73,6 +73,77 @@ test('table upgrades with headers, rows, and aligns', () => {
   assert.deepEqual(table.aligns, [null, 'right'])
 })
 
+test('paired-tag block upgrades like the fence form', () => {
+  const text = [
+    '开场一段。',
+    '',
+    '<stack>',
+    '1.A',
+    '2.1.B',
+    '2.2.C',
+    '</stack>',
+    '',
+    '收尾一段。',
+  ].join('\n')
+  const segments = upgradeText(text)
+  assert.deepEqual(segments.map(s => s.kind), ['native', 'stack', 'native'])
+  assert.equal(segments[1].layers.length, 2)
+  assert.equal(segments[1].layers[1].boxes.length, 2)
+  // The segment keeps the model's own tag slice, not a rewritten fence.
+  assert.equal(segments[1].source, '<stack>\n1.A\n2.1.B\n2.2.C\n</stack>')
+  assert.equal(segments[2].text, '收尾一段。')
+})
+
+test('paired-tag prototype-choices keeps inner fences inside its options', () => {
+  const text = [
+    '<prototype-choices>',
+    '### 要落到哪一层',
+    '@只配两个检索代理',
+    '```yaml',
+    '- id: tool-subagent-sagittarius',
+    '```',
+    '改动最小，热重载即生效。',
+    '',
+    '@连预设里的 subagent 一起',
+    '```yaml',
+    '- id: tool-subagent',
+    '```',
+    '所有 spawn 子代理默认都换模型。',
+    '</prototype-choices>',
+  ].join('\n')
+  const segments = upgradeText(text)
+  assert.deepEqual(segments.map(s => s.kind), ['choices'])
+  assert.equal(segments[0].title, '要落到哪一层')
+  assert.deepEqual(segments[0].choices.map(choice => choice.label), ['只配两个检索代理', '连预设里的 subagent 一起'])
+  assert.ok(segments[0].choices[0].body.includes('- id: tool-subagent-sagittarius'))
+})
+
+test('unclosed and unknown tag blocks stay native', () => {
+  assert.deepEqual(upgradeText('<widget>\n内容\n</widget>').map(s => s.kind), ['native'])
+  assert.deepEqual(upgradeText('前文。\n\n<stack>\n1.A\n2.B').map(s => s.kind), ['native'])
+})
+
+test('tag-looking lines inside a fenced code block stay code', () => {
+  const text = '```md\n<stack>\n1.A\n2.B\n</stack>\n```'
+  const segments = upgradeText(text)
+  assert.deepEqual(segments.map(s => s.kind), ['native'])
+  assert.ok(segments[0].text.includes('<stack>'))
+})
+
+test('a paired-tag body the parser declines keeps the original tag text', () => {
+  const text = '前文。\n\n<stack>\n这段不是层号\n</stack>\n\n后文。'
+  const segments = upgradeText(text)
+  assert.deepEqual(segments.map(s => s.kind), ['native', 'native', 'native'])
+  assert.equal(segments[1].text, '<stack>\n这段不是层号\n</stack>')
+  assert.equal(segments[2].text, '后文。')
+})
+
+test('many paired-tag blocks upgrade in source order', () => {
+  const text = Array.from({ length: 30 }, () => '<todo>\n- [ ] 一\n- [ ] 二\n</todo>').join('\n\n')
+  const segments = upgradeText(text)
+  assert.equal(segments.filter(segment => segment.kind === 'checklist').length, 30)
+})
+
 test('malformed and hostile inputs degrade to native without throwing', () => {
   const cases = [
     '',
